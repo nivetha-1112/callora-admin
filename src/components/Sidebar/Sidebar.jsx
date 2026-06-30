@@ -110,18 +110,27 @@ export default function Sidebar() {
                     color: '#ffffff',
                     transform: 'translateX(4px)',
                   },
-                  '& .MuiListItemIcon-root': {
+                   '& .MuiListItemIcon-root': {
                     color: '#ffffff',
-                    minWidth: 40,
+                    minWidth: 36,
                     transition: 'color 0.2s ease',
                   },
                   '&:hover .MuiListItemIcon-root': {
                     color: '#ffffff',
-                  },
-                }}
-              >
+                    }
+                  }}
+                >
                 <ListItemIcon>
-                  <i className={item.iconClass} style={{ fontSize: '1.2rem', color: '#ffffff' }}></i>
+                  <i 
+                    className={item.iconClass} 
+                    style={{ 
+                      fontSize: '1.2rem', 
+                      color: '#ffffff',
+                      display: 'inline-flex',
+                      justifyContent: 'center',
+                      width: '22px'
+                    }}
+                  ></i>
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
