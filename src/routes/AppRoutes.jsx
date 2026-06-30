@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import Dashboard from '../pages/Dashboard/Dashboard';
+import RolesPermissions from '../pages/RolesPermissions/RolesPermissions';
 import ManagerList from '../pages/Manager/ManagerList';
 import TelecallerList from '../pages/Telecaller/TelecallerList';
 import TelecallerDetails from '../pages/Telecaller/TelecallerDetails';
@@ -14,6 +15,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<DashboardLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="roles-permissions" element={<RolesPermissions />} />
         <Route path="managers" element={<ManagerList />} />
         <Route path="telecallers" element={<TelecallerList />} />
         <Route path="telecallers/:id" element={<TelecallerDetails />} />

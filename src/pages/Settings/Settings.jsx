@@ -9,13 +9,6 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import { useAppContext } from '../../store/AppContext';
 import { getInitials } from '../../utils/helpers';
 
-const roles = [
-  { id: 1, name: 'Super Admin', permissions: 'Full Access', users: 2, color: '#0343a8' },
-  { id: 2, name: 'Admin', permissions: 'Manage Users, View Reports', users: 5, color: '#6366f1' },
-  { id: 3, name: 'Manager', permissions: 'Manage Telecallers, View Team Reports', users: 24, color: '#10b981' },
-  { id: 4, name: 'Telecaller', permissions: 'Make Calls, View Own Data', users: 156, color: '#f59e0b' },
-  { id: 5, name: 'Viewer', permissions: 'View Only Access', users: 8, color: '#6b7280' },
-];
 
 export default function Settings() {
   const [tab, setTab] = useState(0);
@@ -37,7 +30,6 @@ export default function Settings() {
   const tabItems = [
     { label: 'Profile', icon: <i className="bi bi-person" style={{ fontSize: '1.05rem' }}></i> },
     { label: 'Password', icon: <i className="bi bi-key" style={{ fontSize: '1.05rem' }}></i> },
-    { label: 'Roles & Permissions', icon: <i className="bi bi-shield-check" style={{ fontSize: '1.05rem' }}></i> },
     { label: 'Notifications', icon: <i className="bi bi-bell" style={{ fontSize: '1.05rem' }}></i> },
     { label: 'Theme', icon: <i className="bi bi-palette" style={{ fontSize: '1.05rem' }}></i> },
   ];
@@ -160,52 +152,8 @@ export default function Settings() {
             </Card>
           )}
 
-          {/* Roles & Permissions */}
-          {tab === 2 && (
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>User Roles & Permissions</Typography>
-                  <Button variant="outlined" startIcon={<i className="bi bi-shield-check"></i>} sx={{ borderColor: '#0343a8', color: '#0343a8' }}>
-                    Add Role
-                  </Button>
-                </Box>
-                <TableContainer>
-                  <Table sx={{ minWidth: 600 }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Role Name</TableCell>
-                        <TableCell>Permissions</TableCell>
-                        <TableCell>Users</TableCell>
-                        <TableCell>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {roles.map((role) => (
-                        <TableRow key={role.id} hover>
-                          <TableCell>
-                            <Chip label={role.name} sx={{ backgroundColor: `${role.color}15`, color: role.color, fontWeight: 600 }} />
-                          </TableCell>
-                          <TableCell><Typography variant="body2" color="text.secondary">{role.permissions}</Typography></TableCell>
-                          <TableCell>
-                            <Chip label={role.users} size="small" sx={{ backgroundColor: '#f3f4f6', fontWeight: 600 }} />
-                          </TableCell>
-                          <TableCell>
-                            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#0343a8', backgroundColor: '#eaf4ff' } }}>
-                              <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Notifications */}
-          {tab === 3 && (
+          {tab === 2 && (
             <Card>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>Notification Preferences</Typography>
@@ -248,7 +196,7 @@ export default function Settings() {
           )}
 
           {/* Theme */}
-          {tab === 4 && (
+          {tab === 3 && (
             <Card>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>Theme Settings</Typography>

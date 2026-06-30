@@ -10,6 +10,7 @@ const SIDEBAR_WIDTH = 270;
 
 const menuItems = [
   { text: 'Dashboard', iconClass: 'bi bi-speedometer2', path: '/' },
+  { text: 'Roles & Permission', iconClass: 'bi bi-shield-check', path: '/roles-permissions' },
   { text: 'Manager', iconClass: 'bi bi-person-badge', path: '/managers' },
   { text: 'Telecaller', iconClass: 'bi bi-headset', path: '/telecallers' },
   { text: 'Logout report', iconClass: 'bi bi-shield-lock', path: '/logout-report' },
