@@ -121,34 +121,34 @@ export default function TelecallerDetails() {
           {/* Client List Tab */}
           {tab === 0 && (
             <TableContainer>
-              <Table>
+              <Table sx={{ minWidth: 800 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Client Name</TableCell>
-                    <TableCell>Phone Number</TableCell>
-                    <TableCell>Call Duration</TableCell>
-                    <TableCell>Last Contact</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Follow-up Date</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Client Name</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Phone Number</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Call Duration</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Last Contact</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Follow-up Date</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {telecallerClients.map((client) => (
                     <TableRow key={client.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, whiteSpace: 'nowrap' }}>
                           <Avatar sx={{ width: 30, height: 30, fontSize: '0.7rem', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
                             {getInitials(client.clientName)}
                           </Avatar>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{client.clientName}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{client.clientName}</Typography>
                         </Box>
                       </TableCell>
-                      <TableCell><Typography variant="body2">{client.phone}</Typography></TableCell>
-                      <TableCell><Typography variant="body2">{client.callDuration}</Typography></TableCell>
-                      <TableCell><Typography variant="body2">{formatDate(client.lastContact)}</Typography></TableCell>
-                      <TableCell><StatusChip status={client.callStatus} /></TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color={client.followUpDate ? 'text.primary' : 'text.secondary'}>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{client.phone}</Typography></TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{client.callDuration}</Typography></TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{formatDate(client.lastContact)}</Typography></TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}><StatusChip status={client.callStatus} /></TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        <Typography variant="body2" color={client.followUpDate ? 'text.primary' : 'text.secondary'} sx={{ whiteSpace: 'nowrap' }}>
                           {client.followUpDate ? formatDate(client.followUpDate) : '—'}
                         </Typography>
                       </TableCell>

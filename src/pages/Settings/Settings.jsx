@@ -171,7 +171,7 @@ export default function Settings() {
                   </Button>
                 </Box>
                 <TableContainer>
-                  <Table>
+                  <Table sx={{ minWidth: 600 }}>
                     <TableHead>
                       <TableRow>
                         <TableCell>Role Name</TableCell>
@@ -191,7 +191,9 @@ export default function Settings() {
                             <Chip label={role.users} size="small" sx={{ backgroundColor: '#f3f4f6', fontWeight: 600 }} />
                           </TableCell>
                           <TableCell align="center">
-                            <IconButton size="small" sx={{ color: '#034cae' }}><i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i></IconButton>
+                            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#034cae', backgroundColor: '#eaf4ff' } }}>
+                              <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}

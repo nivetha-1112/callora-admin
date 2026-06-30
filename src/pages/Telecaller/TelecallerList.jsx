@@ -86,63 +86,63 @@ export default function TelecallerList() {
       {/* Table */}
       <Card>
         <TableContainer>
-          <Table>
+          <Table sx={{ minWidth: 1200 }}>
             <TableHead>
               <TableRow>
-                <TableCell><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Emp ID</TableSortLabel></TableCell>
-                <TableCell><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Name</TableSortLabel></TableCell>
-                <TableCell>Manager</TableCell>
-                <TableCell>Mobile</TableCell>
-                <TableCell align="center">Clients</TableCell>
-                <TableCell align="center">Total Calls</TableCell>
-                <TableCell align="center">Duration</TableCell>
-                <TableCell align="center" sx={{ color: '#10b981' }}>Interested</TableCell>
-                <TableCell align="center" sx={{ color: '#ef4444' }}>Not Int.</TableCell>
-                <TableCell align="center" sx={{ color: '#f59e0b' }}>Ringing</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Emp ID</TableSortLabel></TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Name</TableSortLabel></TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Manager</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Clients</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Total Calls</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Duration</TableCell>
+                <TableCell align="center" sx={{ color: '#10b981', whiteSpace: 'nowrap' }}>Interested</TableCell>
+                <TableCell align="center" sx={{ color: '#ef4444', whiteSpace: 'nowrap' }}>Not Int.</TableCell>
+                <TableCell align="center" sx={{ color: '#f59e0b', whiteSpace: 'nowrap' }}>Ringing</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tc) => (
                 <TableRow key={tc.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/telecallers/${tc.id}`)}>
-                  <TableCell>
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#034cae' }}>{tc.id}</Typography>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#034cae', whiteSpace: 'nowrap' }}>{tc.id}</Typography>
                   </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
                       <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
                         {getInitials(tc.name)}
                       </Avatar>
-                      <Box>
-                        <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{tc.name}</Typography>
-                        <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>{tc.email}</Typography>
+                      <Box sx={{ whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.name}</Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{tc.email}</Typography>
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{tc.managerName}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{tc.mobile}</Typography></TableCell>
-                  <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600 }}>{tc.totalClients}</Typography></TableCell>
-                  <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600 }}>{tc.totalCalls}</Typography></TableCell>
-                  <TableCell align="center"><Typography variant="body2">{formatDuration(tc.totalDuration)}</Typography></TableCell>
-                  <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: '#10b981' }}>{tc.interested}</Typography></TableCell>
-                  <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: '#ef4444' }}>{tc.notInterested}</Typography></TableCell>
-                  <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: '#f59e0b' }}>{tc.ringing}</Typography></TableCell>
-                  <TableCell><StatusChip status={tc.status} /></TableCell>
-                  <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{tc.managerName}</Typography></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tc.mobile}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.totalClients}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.totalCalls}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{formatDuration(tc.totalDuration)}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#10b981', whiteSpace: 'nowrap' }}>{tc.interested}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#ef4444', whiteSpace: 'nowrap' }}>{tc.notInterested}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#f59e0b', whiteSpace: 'nowrap' }}>{tc.ringing}</Typography></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><StatusChip status={tc.status} /></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
                       <Tooltip title="View">
-                        <IconButton size="small" onClick={() => navigate(`/telecallers/${tc.id}`)} sx={{ color: '#034cae', '&:hover': { backgroundColor: '#eaf4ff' } }}>
+                        <IconButton size="small" onClick={() => navigate(`/telecallers/${tc.id}`)} sx={{ color: '#64748b', '&:hover': { color: '#034cae', backgroundColor: '#eaf4ff' } }}>
                           <i className="bi bi-eye" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Edit">
-                        <IconButton size="small" sx={{ color: '#f59e0b', '&:hover': { backgroundColor: '#fef3c7' } }}>
+                        <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#d97706', backgroundColor: '#fef3c7' } }}>
                           <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton size="small" sx={{ color: '#ef4444', '&:hover': { backgroundColor: '#fee2e2' } }}>
+                        <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}>
                           <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>

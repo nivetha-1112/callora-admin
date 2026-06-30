@@ -102,45 +102,45 @@ export default function AuthMonitoring() {
               </Box>
 
               <TableContainer>
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: 850 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Emp ID</TableCell>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Login Time</TableCell>
-                      <TableCell>Logout Time</TableCell>
-                      <TableCell>Duration</TableCell>
-                      <TableCell>Device / Browser</TableCell>
-                      <TableCell>IP Address</TableCell>
-                      <TableCell>Status</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Emp ID</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Login Time</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Logout Time</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Duration</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Device / Browser</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>IP Address</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {filteredHistory.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                       <TableRow key={row.id} hover>
-                        <TableCell><Typography variant="body2" sx={{ fontWeight: 600, color: '#034cae' }}>{row.employeeId}</Typography></TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#034cae', whiteSpace: 'nowrap' }}>{row.employeeId}</Typography></TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, whiteSpace: 'nowrap' }}>
                             <Avatar sx={{ width: 28, height: 28, fontSize: '0.65rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
                               {getInitials(row.name)}
                             </Avatar>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.name}</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{row.name}</Typography>
                           </Box>
                         </TableCell>
-                        <TableCell><Typography variant="body2">{formatTime(row.loginTime)}</Typography></TableCell>
-                        <TableCell><Typography variant="body2">{row.logoutTime ? formatTime(row.logoutTime) : '—'}</Typography></TableCell>
-                        <TableCell><Typography variant="body2">{row.sessionDuration}</Typography></TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{formatTime(row.loginTime)}</Typography></TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{row.logoutTime ? formatTime(row.logoutTime) : '—'}</Typography></TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{row.sessionDuration}</Typography></TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, whiteSpace: 'nowrap' }}>
                             {getDeviceIcon(row.device)}
-                            <Box>
-                              <Typography variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>{row.device}</Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{row.browser}</Typography>
+                            <Box sx={{ whiteSpace: 'nowrap' }}>
+                              <Typography variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{row.device}</Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>{row.browser}</Typography>
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell><Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{row.ip}</Typography></TableCell>
-                        <TableCell><StatusChip status={row.status} /></TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{row.ip}</Typography></TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}><StatusChip status={row.status} /></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -111,56 +111,56 @@ export default function ManagerList() {
       {/* Table */}
       <Card>
         <TableContainer>
-          <Table>
+          <Table sx={{ minWidth: 1000 }}>
             <TableHead>
               <TableRow>
-                <TableCell><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Manager ID</TableSortLabel></TableCell>
-                <TableCell><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Manager Name</TableSortLabel></TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Mobile</TableCell>
-                <TableCell><TableSortLabel active={orderBy === 'department'} direction={orderBy === 'department' ? order : 'asc'} onClick={() => handleSort('department')}>Department</TableSortLabel></TableCell>
-                <TableCell align="center">Telecallers</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Manager ID</TableSortLabel></TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Manager Name</TableSortLabel></TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'department'} direction={orderBy === 'department' ? order : 'asc'} onClick={() => handleSort('department')}>Department</TableSortLabel></TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Telecallers</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((mgr) => (
                 <TableRow key={mgr.id} hover>
-                  <TableCell>
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#034cae' }}>{mgr.id}</Typography>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#034cae', whiteSpace: 'nowrap' }}>{mgr.id}</Typography>
                   </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
                       <Avatar sx={{ width: 36, height: 36, fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
                         {getInitials(mgr.name)}
                       </Avatar>
-                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>{mgr.name}</Typography>
+                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{mgr.name}</Typography>
                     </Box>
                   </TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{mgr.email}</Typography></TableCell>
-                  <TableCell><Typography variant="body2">{mgr.mobile}</Typography></TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{mgr.email}</Typography></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{mgr.mobile}</Typography></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     <Chip label={mgr.department} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#034cae', fontWeight: 500 }} />
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Chip label={mgr.assignedTelecallers} size="small" sx={{ backgroundColor: '#f0fdf4', color: '#059669', fontWeight: 700, minWidth: 32 }} />
                   </TableCell>
-                  <TableCell><StatusChip status={mgr.status} /></TableCell>
-                  <TableCell align="center">
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><StatusChip status={mgr.status} /></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
                       <Tooltip title="View Details">
-                        <IconButton size="small" onClick={() => handleView(mgr)} sx={{ color: '#034cae', '&:hover': { backgroundColor: '#eaf4ff' } }}>
+                        <IconButton size="small" onClick={() => handleView(mgr)} sx={{ color: '#64748b', '&:hover': { color: '#034cae', backgroundColor: '#eaf4ff' } }}>
                           <i className="bi bi-eye" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Edit">
-                        <IconButton size="small" sx={{ color: '#f59e0b', '&:hover': { backgroundColor: '#fef3c7' } }}>
+                        <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#d97706', backgroundColor: '#fef3c7' } }}>
                           <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton size="small" sx={{ color: '#ef4444', '&:hover': { backgroundColor: '#fee2e2' } }}>
+                        <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}>
                           <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
