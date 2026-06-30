@@ -46,6 +46,14 @@ export default function Reports() {
                     sx: {
                       maxHeight: 250, // Ensures scrollability for a long list of managers
                     }
+                  },
+                  anchorOrigin: {
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  },
+                  transformOrigin: {
+                    vertical: 'top',
+                    horizontal: 'left'
                   }
                 }}
               >

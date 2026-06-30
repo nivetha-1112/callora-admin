@@ -629,6 +629,21 @@ export default function ManagerList() {
                   label="Department" 
                   value={formData.department} 
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        maxHeight: 250,
+                      }
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left'
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left'
+                    }
+                  }}
                 >
                   {departments.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
                 </Select>
@@ -652,6 +667,14 @@ export default function ManagerList() {
                       sx: {
                         maxHeight: 250,
                       }
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left'
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left'
                     }
                   }}
                 >

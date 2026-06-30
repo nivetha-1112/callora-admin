@@ -188,7 +188,25 @@ export default function TelecallerList() {
             <Grid size={6}>
               <FormControl fullWidth size="small">
                 <InputLabel>Assign Manager</InputLabel>
-                <Select label="Assign Manager" defaultValue="">
+                <Select 
+                  label="Assign Manager" 
+                  defaultValue=""
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        maxHeight: 250,
+                      }
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left'
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left'
+                    }
+                  }}
+                >
                   {managers.map((m) => <MenuItem key={m.id} value={m.id}>{m.name}</MenuItem>)}
                 </Select>
               </FormControl>
