@@ -13,10 +13,12 @@ import ExportMenu from '../../components/ExportMenu/ExportMenu';
 import StatCard from '../../components/StatCard/StatCard';
 import { telecallers, telecallerClients, telecallerDailyPerformance, callHistory, followUpReminders } from '../../data/telecallerData';
 import { getInitials, formatDate, formatDateTime, formatDuration } from '../../utils/helpers';
+import { useToast } from '../../context/ToastContext';
 
 export default function TelecallerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [tab, setTab] = useState(0);
 
   const tc = telecallers.find((t) => t.id === id) || telecallers[0];
@@ -38,7 +40,7 @@ export default function TelecallerDetails() {
               sx={{ borderColor: '#e5e7eb', color: 'text.secondary' }}>
               Back
             </Button>
-            <ExportMenu onExport={(f) => alert(`Exporting as ${f}...`)} />
+            <ExportMenu onExport={(f) => showToast(`Exporting as ${f}...`, 'info')} />
           </Box>
         }
       />
@@ -59,7 +61,7 @@ export default function TelecallerDetails() {
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                     <StatusChip status={tc.status} />
-                    <Chip label={tc.id} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#034cae', fontWeight: 600 }} />
+                    <Chip label={tc.id} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', fontWeight: 600 }} />
                   </Box>
                 </Box>
               </Box>
@@ -90,7 +92,7 @@ export default function TelecallerDetails() {
       {/* Performance Stats */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         {[
-          { title: 'Total Calls', value: tc.totalCalls, color: '#034cae', iconClass: 'bi bi-telephone-outbound' },
+          { title: 'Total Calls', value: tc.totalCalls, color: '#0343a8', iconClass: 'bi bi-telephone-outbound' },
           { title: 'Total Talk Time', value: formatDuration(tc.totalDuration), color: '#6366f1', iconClass: 'bi bi-clock' },
           { title: 'Conversion Rate', value: `${conversionRate}%`, color: '#10b981', iconClass: 'bi bi-graph-up' },
           { title: 'Total Clients', value: tc.totalClients, color: '#f59e0b', iconClass: 'bi bi-journal-text' },
@@ -107,8 +109,8 @@ export default function TelecallerDetails() {
           <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{
             px: 2,
             '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.875rem' },
-            '& .Mui-selected': { color: '#034cae' },
-            '& .MuiTabs-indicator': { backgroundColor: '#034cae' },
+            '& .Mui-selected': { color: '#0343a8' },
+            '& .MuiTabs-indicator': { backgroundColor: '#0343a8' },
           }}>
             <Tab label="Client List" />
             <Tab label="Call History" />
@@ -207,7 +209,7 @@ export default function TelecallerDetails() {
                       <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} />
                       <YAxis stroke="#9ca3af" fontSize={12} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                      <Line type="monotone" dataKey="calls" stroke="#034cae" strokeWidth={2.5} dot={{ fill: '#034cae', r: 4 }} name="Calls" />
+                      <Line type="monotone" dataKey="calls" stroke="#0343a8" strokeWidth={2.5} dot={{ fill: '#0343a8', r: 4 }} name="Calls" />
                       <Line type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2.5} dot={{ fill: '#10b981', r: 4 }} name="Conversions" />
                     </LineChart>
                   </ResponsiveContainer>

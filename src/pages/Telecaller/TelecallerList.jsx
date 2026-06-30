@@ -14,9 +14,11 @@ import { telecallers } from '../../data/telecallerData';
 import { managers } from '../../data/managerData';
 import { getInitials, formatDuration } from '../../utils/helpers';
 import useDebounce from '../../hooks/useDebounce';
+import { useToast } from '../../context/ToastContext';
 
 export default function TelecallerList() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [page, setPage] = useState(0);
@@ -55,7 +57,7 @@ export default function TelecallerList() {
         breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Telecallers' }]}
         actions={
           <Button variant="contained" startIcon={<i className="bi bi-plus-lg"></i>} onClick={() => setAddOpen(true)}
-            sx={{ background: 'linear-gradient(135deg, #034cae, #0560d4)', px: 3 }}>
+            sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 3 }}>
             Add Telecaller
           </Button>
         }
@@ -78,7 +80,7 @@ export default function TelecallerList() {
               </Select>
             </FormControl>
             <Box sx={{ flex: 1 }} />
-            <ExportMenu onExport={(f) => alert(`Exporting as ${f}...`)} />
+            <ExportMenu onExport={(f) => showToast(`Exporting as ${f}...`, 'info')} />
           </Box>
         </CardContent>
       </Card>
@@ -89,25 +91,23 @@ export default function TelecallerList() {
           <Table sx={{ minWidth: 1200 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Emp ID</TableSortLabel></TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Emp ID</TableSortLabel></TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Name</TableSortLabel></TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>Manager</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Clients</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Total Calls</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Duration</TableCell>
                 <TableCell align="center" sx={{ color: '#10b981', whiteSpace: 'nowrap' }}>Interested</TableCell>
                 <TableCell align="center" sx={{ color: '#ef4444', whiteSpace: 'nowrap' }}>Not Int.</TableCell>
                 <TableCell align="center" sx={{ color: '#f59e0b', whiteSpace: 'nowrap' }}>Ringing</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tc) => (
                 <TableRow key={tc.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/telecallers/${tc.id}`)}>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#034cae', whiteSpace: 'nowrap' }}>{tc.id}</Typography>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#0343a8', whiteSpace: 'nowrap' }}>{tc.id}</Typography>
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
@@ -121,18 +121,16 @@ export default function TelecallerList() {
                     </Box>
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{tc.managerName}</Typography></TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tc.mobile}</Typography></TableCell>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.totalClients}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tc.mobile}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.totalCalls}</Typography></TableCell>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{formatDuration(tc.totalDuration)}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#10b981', whiteSpace: 'nowrap' }}>{tc.interested}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#ef4444', whiteSpace: 'nowrap' }}>{tc.notInterested}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#f59e0b', whiteSpace: 'nowrap' }}>{tc.ringing}</Typography></TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><StatusChip status={tc.status} /></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><StatusChip status={tc.status} /></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
                       <Tooltip title="View">
-                        <IconButton size="small" onClick={() => navigate(`/telecallers/${tc.id}`)} sx={{ color: '#64748b', '&:hover': { color: '#034cae', backgroundColor: '#eaf4ff' } }}>
+                        <IconButton size="small" onClick={() => navigate(`/telecallers/${tc.id}`)} sx={{ color: '#64748b', '&:hover': { color: '#0343a8', backgroundColor: '#eaf4ff' } }}>
                           <i className="bi bi-eye" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
@@ -165,7 +163,18 @@ export default function TelecallerList() {
       </Card>
 
       {/* Add Telecaller Modal */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={addOpen} 
+        onClose={() => setAddOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            overflow: 'hidden'
+          }
+        }}
+      >
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>Add New Telecaller</Typography>
           <IconButton onClick={() => setAddOpen(false)}><i className="bi bi-x-lg" style={{ fontSize: '1.1rem' }}></i></IconButton>
@@ -184,13 +193,24 @@ export default function TelecallerList() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={6}><TextField fullWidth label="Joining Date" size="small" type="date" InputLabelProps={{ shrink: true }} /></Grid>
+            <Grid size={6}>
+              <TextField 
+                fullWidth 
+                label="Joining Date" 
+                size="small" 
+                type="text" 
+                onFocus={(e) => (e.target.type = "date")}
+                onBlur={(e) => {
+                  if (!e.target.value) e.target.type = "text";
+                }}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setAddOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
           <Button variant="contained" onClick={() => setAddOpen(false)}
-            sx={{ background: 'linear-gradient(135deg, #034cae, #0560d4)' }}>
+            sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)' }}>
             Add Telecaller
           </Button>
         </DialogActions>

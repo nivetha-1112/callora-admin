@@ -2,10 +2,10 @@
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
 :root {
-  --primary: #034cae;
+  --primary: #0343a8;
   --primary-light: #eaf4ff;
   --primary-lighter: #d6e9ff;
-  --primary-dark: #023a8a;
+  --primary-dark: #022d71;
   --bg-page: #f5f7fa;
   --bg-card: #ffffff;
   --text-primary: #1a1a2e;
@@ -147,7 +147,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #034cae, #6366f1);
+  background: linear-gradient(135deg, #0343a8, #6366f1);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

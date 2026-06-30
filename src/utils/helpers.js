@@ -81,6 +81,6 @@ export const formatNumber = (num) => {
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const getRandomColor = () => {
-  const colors = ['#034cae', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+  const colors = ['#0343a8', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
   return colors[Math.floor(Math.random() * colors.length)];
 };

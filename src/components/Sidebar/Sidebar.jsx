@@ -12,7 +12,7 @@ const menuItems = [
   { text: 'Dashboard', iconClass: 'bi bi-speedometer2', path: '/' },
   { text: 'Manager', iconClass: 'bi bi-person-badge', path: '/managers' },
   { text: 'Telecaller', iconClass: 'bi bi-headset', path: '/telecallers' },
-  { text: 'Authentication', iconClass: 'bi bi-shield-lock', path: '/authentication' },
+  { text: 'Logout report', iconClass: 'bi bi-shield-lock', path: '/logout-report' },
   { text: 'Reports', iconClass: 'bi bi-bar-chart-line', path: '/reports' },
   { text: 'Settings', iconClass: 'bi bi-gear', path: '/settings' },
 ];
@@ -42,7 +42,7 @@ export default function Sidebar() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, #034cae 0%, #023a8a 100%)',
+        background: 'linear-gradient(180deg, #0343a8 0%, #022d71 100%)',
         color: '#ffffff',
       }}
     >

@@ -52,7 +52,7 @@ export default function Header() {
             py: 0.5,
             flex: 1,
             maxWidth: { xs: '100%', sm: 400 },
-            border: searchFocused ? '1px solid #034cae30' : '1px solid transparent',
+            border: searchFocused ? '1px solid #0343a830' : '1px solid transparent',
             transition: 'all 0.3s ease',
           }}
         >
@@ -91,9 +91,7 @@ export default function Header() {
               onClick={(e) => setNotifAnchor(e.currentTarget)}
               sx={{ color: 'text.secondary' }}
             >
-              <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', minWidth: 18, height: 18 } }}>
-                <i className="bi bi-bell" style={{ fontSize: '1.15rem' }}></i>
-              </Badge>
+              
             </IconButton>
           </Tooltip>
 
@@ -160,7 +158,7 @@ export default function Header() {
               sx={{
                 width: 36,
                 height: 36,
-                background: 'linear-gradient(135deg, #034cae, #6366f1)',
+                background: 'linear-gradient(135deg, #0343a8, #6366f1)',
                 fontSize: '0.8rem',
                 fontWeight: 700,
               }}

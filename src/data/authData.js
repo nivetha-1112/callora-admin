@@ -1,6 +1,6 @@
 export const authStats = [
   { id: 1, title: 'Total Active Users', value: 142, change: '+5', trend: 'up', iconClass: 'bi bi-person-check', color: '#10b981' },
-  { id: 2, title: 'Logged In Today', value: 98, change: '+12', trend: 'up', iconClass: 'bi bi-box-arrow-in-right', color: '#034cae' },
+  { id: 2, title: 'Logged In Today', value: 98, change: '+12', trend: 'up', iconClass: 'bi bi-box-arrow-in-right', color: '#0343a8' },
   { id: 3, title: 'Logged Out Today', value: 34, change: '+8', trend: 'up', iconClass: 'bi bi-box-arrow-right', color: '#6b7280' },
   { id: 4, title: 'Failed Login Attempts', value: 7, change: '-3', trend: 'down', iconClass: 'bi bi-exclamation-triangle', color: '#ef4444' },
 ];

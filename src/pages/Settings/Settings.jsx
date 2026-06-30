@@ -10,7 +10,7 @@ import { useAppContext } from '../../store/AppContext';
 import { getInitials } from '../../utils/helpers';
 
 const roles = [
-  { id: 1, name: 'Super Admin', permissions: 'Full Access', users: 2, color: '#034cae' },
+  { id: 1, name: 'Super Admin', permissions: 'Full Access', users: 2, color: '#0343a8' },
   { id: 2, name: 'Admin', permissions: 'Manage Users, View Reports', users: 5, color: '#6366f1' },
   { id: 3, name: 'Manager', permissions: 'Manage Telecallers, View Team Reports', users: 24, color: '#10b981' },
   { id: 4, name: 'Telecaller', permissions: 'Make Calls, View Own Data', users: 156, color: '#f59e0b' },
@@ -32,7 +32,7 @@ export default function Settings() {
   });
 
   const [themeChoice, setThemeChoice] = useState('light');
-  const [accentColor, setAccentColor] = useState('#034cae');
+  const [accentColor, setAccentColor] = useState('#0343a8');
 
   const tabItems = [
     { label: 'Profile', icon: <i className="bi bi-person" style={{ fontSize: '1.05rem' }}></i> },
@@ -65,7 +65,7 @@ export default function Settings() {
                     justifyContent: 'flex-start', px: 2, py: 1.5, minHeight: 48,
                     borderRadius: 2, mb: 0.5,
                   },
-                  '& .Mui-selected': { color: '#034cae', backgroundColor: '#eaf4ff' },
+                  '& .Mui-selected': { color: '#0343a8', backgroundColor: '#eaf4ff' },
                   '& .MuiTabs-indicator': { display: 'none' },
                 }}
               >
@@ -97,8 +97,8 @@ export default function Settings() {
                     </Avatar>
                     <IconButton size="small" sx={{
                       position: 'absolute', bottom: 0, right: 0,
-                      backgroundColor: '#034cae', color: '#fff',
-                      '&:hover': { backgroundColor: '#023a8a' },
+                      backgroundColor: '#0343a8', color: '#fff',
+                      '&:hover': { backgroundColor: '#022d71' },
                       width: 28, height: 28,
                     }}>
                       <i className="bi bi-camera" style={{ fontSize: '0.85rem' }}></i>
@@ -122,7 +122,7 @@ export default function Settings() {
                 </Grid>
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button variant="contained" startIcon={<i className="bi bi-save"></i>}
-                    sx={{ background: 'linear-gradient(135deg, #034cae, #0560d4)', px: 4 }}>
+                    sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 4 }}>
                     Save Changes
                   </Button>
                 </Box>
@@ -151,7 +151,7 @@ export default function Settings() {
                   </Box>
                   <Box sx={{ mt: 3 }}>
                     <Button variant="contained" startIcon={<i className="bi bi-key-fill"></i>}
-                      sx={{ background: 'linear-gradient(135deg, #034cae, #0560d4)', px: 4 }}>
+                      sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 4 }}>
                       Update Password
                     </Button>
                   </Box>
@@ -166,7 +166,7 @@ export default function Settings() {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>User Roles & Permissions</Typography>
-                  <Button variant="outlined" startIcon={<i className="bi bi-shield-check"></i>} sx={{ borderColor: '#034cae', color: '#034cae' }}>
+                  <Button variant="outlined" startIcon={<i className="bi bi-shield-check"></i>} sx={{ borderColor: '#0343a8', color: '#0343a8' }}>
                     Add Role
                   </Button>
                 </Box>
@@ -176,8 +176,8 @@ export default function Settings() {
                       <TableRow>
                         <TableCell>Role Name</TableCell>
                         <TableCell>Permissions</TableCell>
-                        <TableCell align="center">Users</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        <TableCell>Users</TableCell>
+                        <TableCell>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -187,11 +187,11 @@ export default function Settings() {
                             <Chip label={role.name} sx={{ backgroundColor: `${role.color}15`, color: role.color, fontWeight: 600 }} />
                           </TableCell>
                           <TableCell><Typography variant="body2" color="text.secondary">{role.permissions}</Typography></TableCell>
-                          <TableCell align="center">
+                          <TableCell>
                             <Chip label={role.users} size="small" sx={{ backgroundColor: '#f3f4f6', fontWeight: 600 }} />
                           </TableCell>
-                          <TableCell align="center">
-                            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#034cae', backgroundColor: '#eaf4ff' } }}>
+                          <TableCell>
+                            <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#0343a8', backgroundColor: '#eaf4ff' } }}>
                               <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
                             </IconButton>
                           </TableCell>
@@ -229,8 +229,8 @@ export default function Settings() {
                         checked={notifications[item.key]}
                         onChange={(e) => setNotifications({ ...notifications, [item.key]: e.target.checked })}
                         sx={{
-                          '& .MuiSwitch-switchBase.Mui-checked': { color: '#034cae' },
-                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#034cae' },
+                          '& .MuiSwitch-switchBase.Mui-checked': { color: '#0343a8' },
+                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#0343a8' },
                         }}
                       />
                     </Box>
@@ -239,7 +239,7 @@ export default function Settings() {
                 ))}
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button variant="contained" startIcon={<i className="bi bi-save"></i>}
-                    sx={{ background: 'linear-gradient(135deg, #034cae, #0560d4)', px: 4 }}>
+                    sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 4 }}>
                     Save Preferences
                   </Button>
                 </Box>
@@ -261,10 +261,10 @@ export default function Settings() {
                           onClick={() => setThemeChoice(mode)}
                           sx={{
                             p: 2, borderRadius: 3, cursor: 'pointer',
-                            border: themeChoice === mode ? '2px solid #034cae' : '2px solid #e5e7eb',
+                            border: themeChoice === mode ? '2px solid #0343a8' : '2px solid #e5e7eb',
                             backgroundColor: mode === 'dark' ? '#1a1a2e' : '#ffffff',
                             transition: 'all 0.2s ease',
-                            '&:hover': { borderColor: '#034cae' },
+                            '&:hover': { borderColor: '#0343a8' },
                           }}
                         >
                           <Box sx={{
@@ -295,7 +295,7 @@ export default function Settings() {
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Accent Color</Typography>
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                    {['#034cae', '#6366f1', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'].map((color) => (
+                    {['#0343a8', '#6366f1', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'].map((color) => (
                       <Box
                         key={color}
                         onClick={() => setAccentColor(color)}
@@ -314,7 +314,7 @@ export default function Settings() {
 
                 <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button variant="contained" startIcon={<i className="bi bi-save"></i>}
-                    sx={{ background: 'linear-gradient(135deg, #034cae, #0560d4)', px: 4 }}>
+                    sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 4 }}>
                     Save Theme
                   </Button>
                 </Box>

@@ -3,9 +3,9 @@ import { createTheme } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#034cae',
-      light: '#3570c7',
-      dark: '#023a8a',
+      main: '#0343a8',
+      light: '#3669bd',
+      dark: '#022d71',
       contrastText: '#ffffff',
     },
     secondary: {
@@ -78,6 +78,17 @@ const theme = createTheme({
             background: '#c1c1c1',
             borderRadius: 3,
           },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: '16px 16px',
+          borderBottom: '1px solid #f3f4f6',
+        },
+        sizeSmall: {
+          padding: '12px 16px',
         },
       },
     },

@@ -17,7 +17,7 @@ export default function AppRoutes() {
         <Route path="managers" element={<ManagerList />} />
         <Route path="telecallers" element={<TelecallerList />} />
         <Route path="telecallers/:id" element={<TelecallerDetails />} />
-        <Route path="authentication" element={<AuthMonitoring />} />
+        <Route path="logout-report" element={<AuthMonitoring />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
       </Route>

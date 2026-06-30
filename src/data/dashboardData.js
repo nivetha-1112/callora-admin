@@ -1,5 +1,5 @@
 export const dashboardStats = [
-  { id: 1, title: 'Total Managers', value: 24, change: '+3', trend: 'up', iconClass: 'bi bi-person-badge', color: '#034cae' },
+  { id: 1, title: 'Total Managers', value: 24, change: '+3', trend: 'up', iconClass: 'bi bi-person-badge', color: '#0343a8' },
   { id: 2, title: 'Total Telecallers', value: 156, change: '+12', trend: 'up', iconClass: 'bi bi-headset', color: '#6366f1' },
   { id: 3, title: 'Total Clients', value: 3842, change: '+248', trend: 'up', iconClass: 'bi bi-people', color: '#8b5cf6' },
   { id: 4, title: "Today's Calls", value: 1247, change: '+18%', trend: 'up', iconClass: 'bi bi-telephone-outbound', color: '#10b981' },

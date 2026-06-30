@@ -50,7 +50,7 @@ export default function Dashboard() {
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#034cae' }} />
+                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#0343a8' }} />
                     <Typography variant="caption" color="text.secondary">Connected</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -63,8 +63,8 @@ export default function Dashboard() {
                 <AreaChart data={dailyCallData}>
                   <defs>
                     <linearGradient id="colorConnected" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#034cae" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#034cae" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#0343a8" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#0343a8" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorMissed" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
@@ -77,7 +77,7 @@ export default function Dashboard() {
                   <ReTooltip
                     contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 13 }}
                   />
-                  <Area type="monotone" dataKey="connected" stroke="#034cae" strokeWidth={2.5} fillOpacity={1} fill="url(#colorConnected)" />
+                  <Area type="monotone" dataKey="connected" stroke="#0343a8" strokeWidth={2.5} fillOpacity={1} fill="url(#colorConnected)" />
                   <Area type="monotone" dataKey="missed" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorMissed)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -139,7 +139,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
                   <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
                   <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 13 }} />
-                  <Bar dataKey="calls" fill="#034cae" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Bar dataKey="calls" fill="#0343a8" radius={[4, 4, 0, 0]} barSize={20} />
                   <Bar dataKey="conversions" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
@@ -160,7 +160,7 @@ export default function Dashboard() {
                   <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
                   <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 13 }} />
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.75rem' }} />
-                  <Bar dataKey="calls" fill="#034cae" radius={[4, 4, 0, 0]} barSize={16} name="Actual Calls" />
+                  <Bar dataKey="calls" fill="#0343a8" radius={[4, 4, 0, 0]} barSize={16} name="Actual Calls" />
                   <Bar dataKey="target" fill="#d6e9ff" radius={[4, 4, 0, 0]} barSize={16} name="Target" />
                 </BarChart>
               </ResponsiveContainer>
@@ -177,8 +177,8 @@ export default function Dashboard() {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>Recent Logins</Typography>
-                <IconButton size="small" onClick={() => navigate('/authentication')}>
-                  <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#034cae' }}></i>
+                <IconButton size="small" onClick={() => navigate('/logout-report')}>
+                  <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
               {recentLoginActivities.slice(0, 5).map((activity) => (
@@ -213,7 +213,7 @@ export default function Dashboard() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>Recent Calls</Typography>
                 <IconButton size="small" onClick={() => navigate('/reports')}>
-                  <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#034cae' }}></i>
+                  <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
               {recentCallLogs.slice(0, 5).map((log) => (
@@ -246,7 +246,7 @@ export default function Dashboard() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>New Telecallers</Typography>
                 <IconButton size="small" onClick={() => navigate('/telecallers')}>
-                  <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#034cae' }}></i>
+                  <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
               {latestTelecallers.map((tc) => (
@@ -298,7 +298,7 @@ export default function Dashboard() {
                     gap: 1,
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      borderColor: '#034cae',
+                      borderColor: '#0343a8',
                       backgroundColor: '#eaf4ff',
                       transform: 'translateY(-4px)',
                       boxShadow: '0 8px 24px rgba(3,76,174,0.1)',

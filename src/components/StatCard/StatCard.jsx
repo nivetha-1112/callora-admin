@@ -21,7 +21,7 @@ export default function StatCard({ title, value, change, trend, iconClass, color
           left: 0,
           width: '4px',
           height: '100%',
-          backgroundColor: color || '#034cae',
+          backgroundColor: color || '#0343a8',
           borderRadius: '4px 0 0 4px',
         },
       }}
