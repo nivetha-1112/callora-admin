@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, TextField, MenuItem, Select, FormControl,
   InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -10,47 +10,116 @@ import {
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusChip from '../../components/StatusChip/StatusChip';
 import ExportMenu from '../../components/ExportMenu/ExportMenu';
-import { managers, departments } from '../../data/managerData';
+import { managers } from '../../data/managerData';
 import { telecallers } from '../../data/telecallerData';
 import { getInitials } from '../../utils/helpers';
 import useDebounce from '../../hooks/useDebounce';
 import { useToast } from '../../context/ToastContext';
+
+// Define static options for Roles
+const roles = ['Super Admin', 'Admin', 'Manager'];
+
+// Passcode digit input component
+const PasscodeInput = ({ value, onChange, show }) => {
+  const inputsRef = useRef([]);
+  
+  const handleCharChange = (index, char) => {
+    // Only allow digits
+    if (char && !/^\d+$/.test(char)) return;
+    
+    const newVal = [...value];
+    newVal[index] = char;
+    onChange(newVal);
+    
+    if (char && index < 3) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      if (!value[index] && index > 0) {
+        inputsRef.current[index - 1]?.focus();
+      } else {
+        const newVal = [...value];
+        newVal[index] = '';
+        onChange(newVal);
+      }
+    }
+  };
+
+  return (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <TextField
+          key={i}
+          inputRef={(el) => (inputsRef.current[i] = el)}
+          value={value[i] || ''}
+          onChange={(e) => handleCharChange(i, e.target.value.slice(-1))}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          type={show ? 'text' : 'password'}
+          size="small"
+          slotProps={{
+            htmlInput: {
+              style: {
+                textAlign: 'center',
+                padding: 0,
+                width: '32px',
+                height: '32px',
+                fontWeight: 600,
+                fontSize: '1rem',
+              }
+            }
+          }}
+          sx={{
+            width: '45px',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+            }
+          }}
+        />
+      ))}
+    </Box>
+  );
+};
 
 export default function ManagerList() {
   const { showToast } = useToast();
   const [managerList, setManagerList] = useState(managers);
   const [telecallerList, setTelecallerList] = useState(telecallers);
   const [search, setSearch] = useState('');
-  const [deptFilter, setDeptFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [orderBy, setOrderBy] = useState('name');
   const [order, setOrder] = useState('asc');
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
   const [selectedManager, setSelectedManager] = useState(null);
   const debouncedSearch = useDebounce(search);
 
-  // States for Add/Edit Form
+  // viewMode can be 'list' | 'add' | 'edit'
+  const [viewMode, setViewMode] = useState('list');
   const [isEdit, setIsEdit] = useState(false);
   const [editingManagerId, setEditingManagerId] = useState(null);
+  
+  // Password Visibility States
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // States for Add/Edit Form
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     mobile: '',
-    department: '',
+    role: '',
+    password: ['', '', '', ''],
+    confirmPassword: ['', '', '', ''],
+    status: 'Active',
+    photo: null,
     assignedTelecallers: []
   });
 
-  // States for CSV Bulk Upload
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleAssignClientClick = (tc) => {
-    setSelectedFile(null);
-    setUploadOpen(true);
-  };
 
   const getAssignedCount = (mgrId) => {
     return telecallerList.filter((t) => t.managerId === mgrId).length;
@@ -65,12 +134,16 @@ export default function ManagerList() {
       name: manager.name,
       email: manager.email,
       mobile: manager.mobile,
-      department: manager.department,
+      role: manager.role || 'Manager',
+      password: ['', '', '', ''],
+      confirmPassword: ['', '', '', ''],
+      status: manager.status || 'Active',
+      photo: manager.photo || null,
       assignedTelecallers: assignedIds
     });
     setEditingManagerId(manager.id);
     setIsEdit(true);
-    setAddOpen(true);
+    setViewMode('edit');
   };
 
   const handleAddClick = () => {
@@ -78,17 +151,39 @@ export default function ManagerList() {
       name: '',
       email: '',
       mobile: '',
-      department: '',
+      role: '',
+      password: ['', '', '', ''],
+      confirmPassword: ['', '', '', ''],
+      status: 'Active',
+      photo: null,
       assignedTelecallers: []
     });
     setEditingManagerId(null);
     setIsEdit(false);
-    setAddOpen(true);
+    setViewMode('add');
   };
 
   const handleSave = () => {
-    if (!formData.name || !formData.email || !formData.mobile || !formData.department) {
-      showToast('Please fill in all fields', 'warning');
+    if (!formData.name || !formData.email || !formData.mobile || !formData.role) {
+      showToast('Please fill in all required fields (Name, Email, Mobile, Role)', 'warning');
+      return;
+    }
+
+    const pwdFilled = formData.password.join('');
+    const confirmPwdFilled = formData.confirmPassword.join('');
+
+    if (!isEdit && pwdFilled.length < 4) {
+      showToast('Please enter a 4-digit password', 'warning');
+      return;
+    }
+
+    if (pwdFilled.length > 0 && pwdFilled.length < 4) {
+      showToast('Password must be exactly 4 digits', 'warning');
+      return;
+    }
+
+    if (pwdFilled !== confirmPwdFilled) {
+      showToast('Passwords do not match', 'error');
       return;
     }
 
@@ -98,10 +193,19 @@ export default function ManagerList() {
       setManagerList((prev) =>
         prev.map((m) =>
           m.id === editingManagerId
-            ? { ...m, name: formData.name, email: formData.email, mobile: formData.mobile, department: formData.department }
+            ? { 
+                ...m, 
+                name: formData.name, 
+                email: formData.email, 
+                mobile: formData.mobile, 
+                role: formData.role, 
+                status: formData.status,
+                photo: formData.photo 
+              }
             : m
         )
       );
+      showToast('Manager updated successfully!', 'success');
     } else {
       const newId = `MGR${String(managerList.length + 1).padStart(3, '0')}`;
       managerId = newId;
@@ -111,14 +215,18 @@ export default function ManagerList() {
         name: formData.name,
         email: formData.email,
         mobile: formData.mobile,
-        department: formData.department,
-        status: 'Active',
+        role: formData.role,
+        status: formData.status,
+        photo: formData.photo,
+        assignedTelecallers: formData.assignedTelecallers.length,
+        joinDate: new Date().toISOString().split('T')[0],
         totalCallsManaged: 0,
         leadConversion: 0,
-        performance: 0
+        performance: 100
       };
 
       setManagerList((prev) => [...prev, newManager]);
+      showToast('Manager added successfully!', 'success');
     }
 
     // Update telecaller assignments
@@ -133,114 +241,25 @@ export default function ManagerList() {
       })
     );
 
-    setAddOpen(false);
+    setViewMode('list');
   };
 
-  // CSV Template downloader helper
-  const downloadTemplate = () => {
-    const csvContent = "Name,Email,Mobile,Department\nJohn Doe,john.doe@example.com,+91 99887 76699,Collections\nJane Smith,jane.smith@example.com,+91 99887 76688,Sales\n";
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "manager_bulk_template.csv");
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleUploadSubmit = () => {
-    if (!selectedFile) {
-      showToast('Please choose a CSV file first', 'warning');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target.result;
-      const lines = text.split(/\r?\n/);
-      if (lines.length < 2) {
-        showToast('CSV file is empty or missing headers', 'error');
-        return;
-      }
-
-      // Parse headers
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const nameIdx = headers.indexOf('name');
-      const emailIdx = headers.indexOf('email');
-      const mobileIdx = headers.indexOf('mobile');
-      const deptIdx = headers.indexOf('department');
-
-      if (nameIdx === -1 || emailIdx === -1 || mobileIdx === -1 || deptIdx === -1) {
-        showToast('Invalid CSV headers. Must contain Name, Email, Mobile, Department', 'error');
-        return;
-      }
-
-      const newManagers = [];
-      let startIndex = managerList.length + 1;
-
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        const cols = line.split(',').map(c => c.trim());
-        if (cols.length < 4) continue;
-
-        const name = cols[nameIdx];
-        const email = cols[emailIdx];
-        const mobile = cols[mobileIdx];
-        const department = cols[deptIdx];
-
-        const newId = `MGR${String(startIndex++).padStart(3, '0')}`;
-
-        newManagers.push({
-          id: newId,
-          name,
-          email,
-          mobile,
-          department,
-          status: 'Active',
-          totalCallsManaged: 0,
-          leadConversion: 0,
-          performance: 0
-        });
-      }
-
-      if (newManagers.length === 0) {
-        showToast('No valid rows found in the CSV file', 'error');
-        return;
-      }
-
-      setManagerList((prev) => [...prev, ...newManagers]);
-      showToast(`Successfully imported ${newManagers.length} managers!`, 'success');
-      setUploadOpen(false);
-      setSelectedFile(null);
-    };
-    reader.readAsText(selectedFile);
-  };
 
   const filtered = useMemo(() => {
     return managerList.filter((m) => {
       const matchSearch = m.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         m.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         m.id.toLowerCase().includes(debouncedSearch.toLowerCase());
-      const matchDept = deptFilter === 'All' || m.department === deptFilter;
       const matchStatus = statusFilter === 'All' || m.status === statusFilter;
-      return matchSearch && matchDept && matchStatus;
+      return matchSearch && matchStatus;
     }).sort((a, b) => {
       const val = order === 'asc' ? 1 : -1;
       if (a[orderBy] < b[orderBy]) return -val;
       if (a[orderBy] > b[orderBy]) return val;
       return 0;
     });
-  }, [managerList, debouncedSearch, deptFilter, statusFilter, orderBy, order]);
+  }, [managerList, debouncedSearch, statusFilter, orderBy, order]);
 
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -248,10 +267,7 @@ export default function ManagerList() {
     setOrderBy(property);
   };
 
-  const handleView = (manager) => {
-    setSelectedManager(manager);
-    setDetailsOpen(true);
-  };
+
 
   const handleStatusChange = (id, newStatus) => {
     setManagerList((prev) =>
@@ -267,6 +283,314 @@ export default function ManagerList() {
     ? telecallerList.filter((t) => t.managerId === activeManagerDetails.id)
     : [];
 
+  if (viewMode !== 'list') {
+    // REDESIGNED ADD/EDIT MANAGER PAGE (FULL-SCREEN FORM VIEW)
+    return (
+      <Box>
+        {/* Banner with modern theme-aligned blue gradient */}
+        <Box 
+          sx={{ 
+            background: 'linear-gradient(135deg, #0343a8 0%, #022d71 100%)', 
+            p: 3, 
+            borderRadius: '12px 12px 0 0', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            boxShadow: '0 4px 20px rgba(3,67,168,0.15)'
+          }}
+        >
+          <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 700, letterSpacing: '0.05em' }}>
+            {viewMode === 'add' ? 'ADD MANAGER' : 'EDIT MANAGER'}
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => setViewMode('list')}
+            startIcon={<i className="bi bi-arrow-left"></i>}
+            sx={{ 
+              backgroundColor: '#ffffff', 
+              color: '#0343a8', 
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              px: 2.5,
+              py: 0.75,
+              borderRadius: '8px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#eaf4ff',
+                color: '#022d71'
+              }
+            }}
+          >
+            List Manager
+          </Button>
+        </Box>
+
+        {/* Form Container Card */}
+        <Card sx={{ borderRadius: '0 0 12px 12px', border: '1px solid #e2e8f0', borderTop: 'none', p: 4, backgroundColor: '#ffffff' }}>
+          <Typography variant="h5" sx={{ color: '#0343a8', fontWeight: 700, mb: 4 }}>
+            Basic Information
+          </Typography>
+
+          <Grid container spacing={4}>
+            {/* Left side - Profile Image Picker */}
+            <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1.5, alignSelf: 'flex-start' }}>
+                Profile Image <span style={{ color: '#ef4444' }}>*</span>
+              </Typography>
+              <Box 
+                sx={{ 
+                  width: 160, 
+                  height: 160, 
+                  borderRadius: '16px', 
+                  border: '1px solid #cbd5e1', 
+                  backgroundColor: '#f8fafc',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  mb: 2,
+                  position: 'relative'
+                }}
+              >
+                {formData.photo ? (
+                  <img 
+                    src={formData.photo} 
+                    alt="Profile Preview" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                ) : (
+                  <i className="bi bi-person" style={{ fontSize: '4.5rem', color: '#94a3b8' }}></i>
+                )}
+              </Box>
+              <Button
+                variant="outlined"
+                component="label"
+                sx={{
+                  borderColor: '#0343a8',
+                  color: '#0343a8',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  px: 3,
+                  py: 0.5,
+                  '&:hover': {
+                    borderColor: '#022d71',
+                    backgroundColor: '#eaf4ff'
+                  }
+                }}
+              >
+                Choose
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setFormData({ ...formData, photo: event.target.result });
+                      };
+                      reader.readAsDataURL(e.target.files[0]);
+                    }
+                  }}
+                />
+              </Button>
+            </Grid>
+
+            {/* Right side - Fields Grid */}
+            <Grid size={{ xs: 12, md: 9 }}>
+              <Grid container spacing={3}>
+                {/* Row 1 */}
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Name <span style={{ color: '#ef4444' }}>*</span>
+                  </Typography>
+                  <TextField 
+                    fullWidth 
+                    placeholder="Enter Full Name" 
+                    size="small" 
+                    value={formData.name} 
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Email <span style={{ color: '#ef4444' }}>*</span>
+                  </Typography>
+                  <TextField 
+                    fullWidth 
+                    placeholder="Enter Email Address" 
+                    size="small" 
+                    type="email"
+                    value={formData.email} 
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Mobile Number <span style={{ color: '#ef4444' }}>*</span>
+                  </Typography>
+                  <TextField 
+                    fullWidth 
+                    placeholder="Enter Phone Number" 
+                    size="small" 
+                    value={formData.mobile} 
+                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })} 
+                  />
+                </Grid>
+
+                {/* Row 2 */}
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Role <span style={{ color: '#ef4444' }}>*</span>
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <Select 
+                      value={formData.role} 
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      displayEmpty
+                      renderValue={(selected) => selected || <span style={{ color: '#94a3b8' }}>Select Role</span>}
+                    >
+                      <MenuItem value="" disabled>Select Role</MenuItem>
+                      {roles.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Password <span style={{ color: '#ef4444' }}>*</span>
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PasscodeInput 
+                      value={formData.password} 
+                      onChange={(val) => setFormData({ ...formData, password: val })} 
+                      show={showPassword} 
+                    />
+                    <IconButton onClick={() => setShowPassword(!showPassword)} size="small">
+                      <i className={showPassword ? "bi bi-eye" : "bi bi-eye-slash"} style={{ fontSize: '1.15rem', color: '#64748b' }}></i>
+                    </IconButton>
+                  </Box>
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Confirm Password <span style={{ color: '#ef4444' }}>*</span>
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PasscodeInput 
+                      value={formData.confirmPassword} 
+                      onChange={(val) => setFormData({ ...formData, confirmPassword: val })} 
+                      show={showConfirmPassword} 
+                    />
+                    <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} size="small">
+                      <i className={showConfirmPassword ? "bi bi-eye" : "bi bi-eye-slash"} style={{ fontSize: '1.15rem', color: '#64748b' }}></i>
+                    </IconButton>
+                  </Box>
+                </Grid>
+
+                {/* Row 3 */}
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Status
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <Select 
+                      value={formData.status} 
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    >
+                      <MenuItem value="Active">Active</MenuItem>
+                      <MenuItem value="Inactive">Inactive</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Telecaller assignment grid inside form (aligned beside Status) */}
+                <Grid size={{ xs: 12, md: 8 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                    Assign Telecallers
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      multiple
+                      value={formData.assignedTelecallers}
+                      onChange={(e) => setFormData({ ...formData, assignedTelecallers: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value })}
+                      renderValue={(selected) => {
+                        return selected.map(id => telecallerList.find(tc => tc.id === id)?.name).filter(Boolean).join(', ');
+                      }}
+                      displayEmpty
+                      renderValueEmpty={() => <span style={{ color: '#94a3b8' }}>Assign Telecallers</span>}
+                      MenuProps={{
+                        PaperProps: {
+                          sx: { maxHeight: 250 }
+                        }
+                      }}
+                    >
+                      {telecallerList.map((tc) => (
+                        <MenuItem key={tc.id} value={tc.id}>
+                          <Checkbox checked={formData.assignedTelecallers.indexOf(tc.id) > -1} size="small" />
+                          <ListItemText 
+                            primary={tc.name} 
+                            secondary={`${tc.id} • ${tc.managerName ? `Under ${tc.managerName}` : 'Unassigned'}`} 
+                            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                            secondaryTypographyProps={{ fontSize: '0.7rem' }}
+                          />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+              </Grid>
+            </Grid>
+          </Grid>
+
+          {/* Form Actions */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 5 }}>
+            <Button 
+              variant="outlined" 
+              onClick={() => setViewMode('list')}
+              sx={{ 
+                borderColor: '#cbd5e1', 
+                color: '#64748b',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 4.5,
+                py: 1,
+                '&:hover': {
+                  borderColor: '#94a3b8',
+                  backgroundColor: '#f1f5f9'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSave}
+              sx={{ 
+                background: 'linear-gradient(135deg, #0343a8, #0454cc)',
+                color: '#ffffff',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 4.5,
+                py: 1,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #023687, #0343a8)',
+                }
+              }}
+            >
+              Save
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  // viewMode === 'list' (DEFAULT TABLE VIEW)
   return (
     <Box>
       <PageHeader
@@ -281,7 +605,7 @@ export default function ManagerList() {
         }
       />
 
-      {/* Filters */}
+      {/* Filters (Removed Department dropdown filter) */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -290,13 +614,6 @@ export default function ManagerList() {
               InputProps={{ startAdornment: <InputAdornment position="start"><i className="bi bi-search" style={{ fontSize: '0.95rem', color: '#9ca3af' }}></i></InputAdornment> }}
             />
             <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Department</InputLabel>
-              <Select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} label="Department">
-                <MenuItem value="All">All Departments</MenuItem>
-                {departments.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 130 }}>
               <InputLabel>Status</InputLabel>
               <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label="Status">
                 <MenuItem value="All">All Status</MenuItem>
@@ -310,17 +627,17 @@ export default function ManagerList() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* Table (Removed Department column) */}
       <Card>
         <TableContainer>
-          <Table sx={{ minWidth: 1000 }}>
+          <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Manager ID</TableSortLabel></TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Manager Name</TableSortLabel></TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'department'} direction={orderBy === 'department' ? order : 'asc'} onClick={() => handleSort('department')}>Department</TableSortLabel></TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Role</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Telecallers</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
@@ -334,8 +651,11 @@ export default function ManagerList() {
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
-                      <Avatar sx={{ width: 36, height: 36, fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
-                        {getInitials(mgr.name)}
+                      <Avatar 
+                        src={mgr.photo}
+                        sx={{ width: 36, height: 36, fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}
+                      >
+                        {!mgr.photo && getInitials(mgr.name)}
                       </Avatar>
                       <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{mgr.name}</Typography>
                     </Box>
@@ -343,29 +663,20 @@ export default function ManagerList() {
                   <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{mgr.email}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{mgr.mobile}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                    <Chip label={mgr.department} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', fontWeight: 500 }} />
+                    <Chip label={mgr.role || 'Manager'} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', fontWeight: 500 }} />
                   </TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                    <Tooltip title="Click to view assigned telecallers" arrow>
-                      <Chip
-                        icon={<i className="bi bi-people-fill" style={{ color: '#059669', fontSize: '0.8rem', marginLeft: '6px' }}></i>}
-                        label={getAssignedCount(mgr.id)}
-                        size="small"
-                        onClick={() => handleView(mgr)}
-                        sx={{
-                          backgroundColor: '#f0fdf4',
-                          color: '#059669',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          pr: 0.5,
-                          '&:hover': {
-                            backgroundColor: '#d1fae5',
-                            transform: 'scale(1.05)',
-                          }
-                        }}
-                      />
-                    </Tooltip>
+                    <Chip
+                      icon={<i className="bi bi-people-fill" style={{ color: '#059669', fontSize: '0.8rem', marginLeft: '6px' }}></i>}
+                      label={getAssignedCount(mgr.id)}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#f0fdf4',
+                        color: '#059669',
+                        fontWeight: 700,
+                        pr: 0.5
+                      }}
+                    />
                   </TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Select
@@ -429,362 +740,6 @@ export default function ManagerList() {
         />
       </Card>
 
-      {/* Manager Details Modal */}
-      <Dialog 
-        open={detailsOpen} 
-        onClose={() => setDetailsOpen(false)} 
-        maxWidth="md" 
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            overflow: 'hidden'
-          }
-        }}
-      >
-        {activeManagerDetails && (
-          <>
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>Manager Info: {activeManagerDetails.name}</Typography>
-              <IconButton onClick={() => setDetailsOpen(false)}><i className="bi bi-x-lg" style={{ fontSize: '1.1rem' }}></i></IconButton>
-            </DialogTitle>
-            <DialogContent dividers>
-              <Grid container spacing={3}>
-                {/* Info Cards */}
-                <Grid size={12}>
-                  <Grid container spacing={2}>
-                    {[
-                      { label: 'Email', value: activeManagerDetails.email, iconClass: 'bi bi-envelope' },
-                      { label: 'Mobile', value: activeManagerDetails.mobile, iconClass: 'bi bi-telephone' },
-                      { label: 'Department', value: activeManagerDetails.department, iconClass: 'bi bi-building' },
-                      { label: 'Telecallers', value: getAssignedCount(activeManagerDetails.id), iconClass: 'bi bi-people' },
-                    ].map((info) => (
-                      <Grid size={{ xs: 6, sm: 3 }} key={info.label}>
-                        <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#f9fafb', textAlign: 'center' }}>
-                          <Box sx={{ color: '#475569', mb: 0.5 }}>
-                            <i className={info.iconClass} style={{ fontSize: '1.1rem' }}></i>
-                          </Box>
-                          <Typography variant="caption" color="text.secondary" display="block">{info.label}</Typography>
-                          <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{info.value}</Typography>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Grid>
-
-                {/* Performance Stats */}
-                <Grid size={12}>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 4 }}>
-                      <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, backgroundColor: '#eaf4ff' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: '#0343a8' }}>{activeManagerDetails.totalCallsManaged.toLocaleString()}</Typography>
-                        <Typography variant="body2" color="text.secondary">Total Clients</Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 4 }}>
-                      <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, backgroundColor: '#d1fae5' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: '#059669' }}>{activeManagerDetails.leadConversion}%</Typography>
-                        <Typography variant="body2" color="text.secondary">Lead Conversion</Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 4 }}>
-                      <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, backgroundColor: '#fef3c7' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 800, color: '#d97706' }}>{activeManagerDetails.performance}%</Typography>
-                        <Typography variant="body2" color="text.secondary">Performance Score</Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Grid>
-
-                {/* Assigned Telecallers */}
-                <Grid size={12}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Assigned Telecallers ({assignedTelecallers.length})</Typography>
-                  <TableContainer>
-                    <Table size="small" sx={{ minWidth: 800 }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Emp ID</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-                          <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
-                          <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Total Calls</TableCell>
-                          <TableCell align="center" sx={{ color: '#10b981', whiteSpace: 'nowrap' }}>Interested</TableCell>
-                          <TableCell align="center" sx={{ color: '#ef4444', whiteSpace: 'nowrap' }}>Not Int.</TableCell>
-                          <TableCell align="center" sx={{ color: '#f59e0b', whiteSpace: 'nowrap' }}>Ringing</TableCell>
-                          <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                          <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {assignedTelecallers.map((tc) => (
-                          <TableRow key={tc.id} hover>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                              <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#0343a8', whiteSpace: 'nowrap' }}>{tc.id}</Typography>
-                            </TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
-                                <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
-                                  {getInitials(tc.name)}
-                                </Avatar>
-                                <Box sx={{ whiteSpace: 'nowrap' }}>
-                                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.name}</Typography>
-                                  <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{tc.email}</Typography>
-                                </Box>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tc.mobile}</Typography></TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.totalCalls}</Typography></TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#10b981', whiteSpace: 'nowrap' }}>{tc.interested}</Typography></TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#ef4444', whiteSpace: 'nowrap' }}>{tc.notInterested}</Typography></TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ fontWeight: 600, color: '#f59e0b', whiteSpace: 'nowrap' }}>{tc.ringing}</Typography></TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><StatusChip status={tc.status} /></TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                startIcon={<i className="bi bi-person-plus"></i>}
-                                onClick={() => handleAssignClientClick(tc)}
-                                sx={{
-                                  borderColor: '#0343a8',
-                                  color: '#0343a8',
-                                  fontWeight: 600,
-                                  fontSize: '0.75rem',
-                                  py: 0.5,
-                                  px: 1.5,
-                                  borderRadius: '6px',
-                                  textTransform: 'none',
-                                  '&:hover': {
-                                    borderColor: '#022d71',
-                                    backgroundColor: '#eaf4ff',
-                                  }
-                                }}
-                              >
-                                Assign Client
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-              </Grid>
-            </DialogContent>
-          </>
-        )}
-      </Dialog>
-
-      {/* Add/Edit Manager Modal */}
-      <Dialog 
-        open={addOpen} 
-        onClose={() => setAddOpen(false)} 
-        maxWidth="sm" 
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            overflow: 'hidden'
-          }
-        }}
-      >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            {isEdit ? 'Edit Manager' : 'Add New Manager'}
-          </Typography>
-          <IconButton onClick={() => setAddOpen(false)}><i className="bi bi-x-lg" style={{ fontSize: '1.1rem' }}></i></IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2.5} sx={{ mt: 0 }}>
-            <Grid size={6}>
-              <TextField 
-                fullWidth 
-                label="Full Name" 
-                size="small" 
-                value={formData.name} 
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField 
-                fullWidth 
-                label="Email" 
-                size="small" 
-                type="email" 
-                value={formData.email} 
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField 
-                fullWidth 
-                label="Mobile Number" 
-                size="small" 
-                value={formData.mobile} 
-                onChange={(e) => setFormData({ ...formData, mobile: e.target.value })} 
-              />
-            </Grid>
-            <Grid size={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Department</InputLabel>
-                <Select 
-                  label="Department" 
-                  value={formData.department} 
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxHeight: 250,
-                      }
-                    },
-                    anchorOrigin: {
-                      vertical: 'bottom',
-                      horizontal: 'left'
-                    },
-                    transformOrigin: {
-                      vertical: 'top',
-                      horizontal: 'left'
-                    }
-                  }}
-                >
-                  {departments.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={12}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="assign-telecallers-label">Assign Telecallers</InputLabel>
-                <Select
-                  labelId="assign-telecallers-label"
-                  id="assign-telecallers"
-                  multiple
-                  value={formData.assignedTelecallers}
-                  onChange={(e) => setFormData({ ...formData, assignedTelecallers: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value })}
-                  renderValue={(selected) => {
-                    return selected.map(id => telecallerList.find(tc => tc.id === id)?.name).filter(Boolean).join(', ');
-                  }}
-                  label="Assign Telecallers"
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxHeight: 250,
-                      }
-                    },
-                    anchorOrigin: {
-                      vertical: 'bottom',
-                      horizontal: 'left'
-                    },
-                    transformOrigin: {
-                      vertical: 'top',
-                      horizontal: 'left'
-                    }
-                  }}
-                >
-                  {telecallerList.map((tc) => (
-                    <MenuItem key={tc.id} value={tc.id}>
-                      <Checkbox checked={formData.assignedTelecallers.indexOf(tc.id) > -1} size="small" />
-                      <ListItemText 
-                        primary={tc.name} 
-                        secondary={`${tc.id} • ${tc.managerName ? `Under ${tc.managerName}` : 'Unassigned'}`} 
-                        primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
-                        secondaryTypographyProps={{ fontSize: '0.7rem' }}
-                      />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setAddOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave}
-            sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)' }}>
-            {isEdit ? 'Save Changes' : 'Add Manager'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Assign Client Modal */}
-      <Dialog 
-        open={uploadOpen} 
-        onClose={() => { setUploadOpen(false); setSelectedFile(null); }} 
-        maxWidth="xs" 
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            overflow: 'hidden'
-          }
-        }}
-      >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>Assign Client</Typography>
-          <IconButton onClick={() => { setUploadOpen(false); setSelectedFile(null); }}><i className="bi bi-x-lg" style={{ fontSize: '1.1rem' }}></i></IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ pb: 3 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
-            {/* Instructions */}
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
-              Make sure the headers match the template format: <strong>Name, Email, Mobile, Department</strong>.
-            </Typography>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={downloadTemplate}
-                startIcon={<i className="bi bi-download"></i>}
-                sx={{ borderColor: '#0343a8', color: '#0343a8', '&:hover': { borderColor: '#022d71', backgroundColor: '#eaf4ff' } }}
-              >
-                Download Sample Template
-              </Button>
-            </Box>
-
-            {/* File Picker Zone */}
-            <Box sx={{ width: '100%', border: '1px dashed #cbd5e1', borderRadius: 2, p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-              <i className="bi bi-cloud-upload" style={{ fontSize: '2rem', color: '#64748b' }}></i>
-              <Button
-                variant="contained"
-                component="label"
-                size="small"
-                startIcon={<i className="bi bi-file-earmark-spreadsheet"></i>}
-                sx={{ background: '#64748b', '&:hover': { background: '#475569' } }}
-              >
-                Choose CSV File
-                <input
-                  type="file"
-                  accept=".csv"
-                  hidden
-                  onChange={handleFileChange}
-                />
-              </Button>
-              {selectedFile && (
-                <Typography variant="caption" sx={{ fontWeight: 600, color: '#059669', mt: 1 }}>
-                  Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => { setUploadOpen(false); setSelectedFile(null); }} sx={{ color: 'text.secondary' }}>Cancel</Button>
-          <Button
-            variant="contained"
-            disabled={!selectedFile}
-            onClick={handleUploadSubmit}
-            sx={{ 
-              background: 'linear-gradient(135deg, #0343a8, #0454cc)',
-              color: '#ffffff',
-              '&.Mui-disabled': {
-                background: 'linear-gradient(135deg, #0343a8, #0454cc)',
-                color: '#ffffff',
-                opacity: 0.6
-              }
-            }}
-          >
-            Assign Client
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

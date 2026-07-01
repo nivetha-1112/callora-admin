@@ -26,7 +26,8 @@ export const ToastProvider = ({ children }) => {
         open={open}
         autoHideDuration={4000}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ top: '80px !important' }}
       >
         <Alert 
           onClose={handleClose} 
@@ -37,7 +38,12 @@ export const ToastProvider = ({ children }) => {
             borderRadius: 2.5,
             boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
             fontWeight: 600,
-            fontSize: '0.875rem'
+            fontSize: '0.875rem',
+            backgroundColor: '#10b981 !important', // Force background to green
+            color: '#ffffff',
+            '& .MuiAlert-icon': {
+              color: '#ffffff'
+            }
           }}
         >
           {message}

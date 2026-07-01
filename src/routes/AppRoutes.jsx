@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import RolesPermissions from '../pages/RolesPermissions/RolesPermissions';
 import ManagerList from '../pages/Manager/ManagerList';
+import AssignClient from '../pages/Manager/AssignClient';
 import TelecallerList from '../pages/Telecaller/TelecallerList';
 import TelecallerDetails from '../pages/Telecaller/TelecallerDetails';
 import AuthMonitoring from '../pages/Authentication/AuthMonitoring';
@@ -17,6 +18,7 @@ export default function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="roles-permissions" element={<RolesPermissions />} />
         <Route path="managers" element={<ManagerList />} />
+        <Route path="assign-client" element={<AssignClient />} />
         <Route path="telecallers" element={<TelecallerList />} />
         <Route path="telecallers/:id" element={<TelecallerDetails />} />
         <Route path="logout-report" element={<AuthMonitoring />} />

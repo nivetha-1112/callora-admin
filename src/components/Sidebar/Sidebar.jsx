@@ -12,6 +12,7 @@ const menuItems = [
   { text: 'Dashboard', iconClass: 'bi bi-speedometer2', path: '/' },
   { text: 'Roles & Permission', iconClass: 'bi bi-shield-check', path: '/roles-permissions' },
   { text: 'Manager', iconClass: 'bi bi-person-badge', path: '/managers' },
+  { text: 'Assign client', iconClass: 'bi bi-person-plus', path: '/assign-client' },
   { text: 'Telecaller', iconClass: 'bi bi-headset', path: '/telecallers' },
   { text: 'Logout report', iconClass: 'bi bi-shield-lock', path: '/logout-report' },
   { text: 'Reports', iconClass: 'bi bi-bar-chart-line', path: '/reports' },
