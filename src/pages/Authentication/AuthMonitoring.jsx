@@ -5,8 +5,10 @@ import {
   InputAdornment, Tab, Tabs
 } from '@mui/material';
 
+import { useNavigate } from 'react-router-dom';
 import StatCard from '../../components/StatCard/StatCard';
 import PageHeader from '../../components/PageHeader/PageHeader';
+import StatusChip from '../../components/StatusChip/StatusChip';
 import { authStats, loginHistory } from '../../data/authData';
 import { telecallers } from '../../data/telecallerData';
 import useDebounce from '../../hooks/useDebounce';
@@ -35,6 +37,7 @@ const formatLoginTime = (dateStr) => {
 };
 
 export default function AuthMonitoring() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0); // 0 for Web Login, 1 for Mobile Login
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
@@ -134,12 +137,14 @@ export default function AuthMonitoring() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     sx={{ minWidth: 240 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <i className="bi bi-search" style={{ fontSize: '0.9rem', color: '#9ca3af', marginRight: '6px' }}></i>
-                        </InputAdornment>
-                      )
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <i className="bi bi-search" style={{ fontSize: '0.9rem', color: '#9ca3af', marginRight: '6px' }}></i>
+                          </InputAdornment>
+                        )
+                      }
                     }}
                   />
                 </Box>
@@ -156,6 +161,7 @@ export default function AuthMonitoring() {
                       <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Device Name</TableCell>
                       <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Login Date</TableCell>
                       <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Login Time</TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -171,7 +177,12 @@ export default function AuthMonitoring() {
                       ][row.id % 5];
 
                       return (
-                        <TableRow key={row.id} hover>
+                        <TableRow 
+                          key={row.id} 
+                          hover
+                          onClick={() => navigate(`/telecallers/${row.employeeId}/clients`)}
+                          sx={{ cursor: 'pointer' }}
+                        >
                           <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                             <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#0343a8', whiteSpace: 'nowrap' }}>
                               {row.employeeId}
@@ -206,6 +217,9 @@ export default function AuthMonitoring() {
                             <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                               {formatLoginTime(row.loginTime)}
                             </Typography>
+                          </TableCell>
+                          <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                            <StatusChip status={row.status} />
                           </TableCell>
                         </TableRow>
                       );

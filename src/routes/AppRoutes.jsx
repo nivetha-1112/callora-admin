@@ -6,7 +6,8 @@ import RolesPermissions from '../pages/RolesPermissions/RolesPermissions';
 import ManagerList from '../pages/Manager/ManagerList';
 import AssignClient from '../pages/Manager/AssignClient';
 import TelecallerList from '../pages/Telecaller/TelecallerList';
-import TelecallerDetails from '../pages/Telecaller/TelecallerDetails';
+import TelecallerClientList from '../pages/Telecaller/TelecallerClientList';
+import TelecallerClientDetails from '../pages/Telecaller/TelecallerClientDetails';
 import AuthMonitoring from '../pages/Authentication/AuthMonitoring';
 import Reports from '../pages/Reports/Reports';
 import Settings from '../pages/Settings/Settings';
@@ -20,7 +21,8 @@ export default function AppRoutes() {
         <Route path="managers" element={<ManagerList />} />
         <Route path="assign-client" element={<AssignClient />} />
         <Route path="telecallers" element={<TelecallerList />} />
-        <Route path="telecallers/:id" element={<TelecallerDetails />} />
+        <Route path="telecallers/:id/clients" element={<TelecallerClientList />} />
+        <Route path="telecallers/:id/clients/:clientId" element={<TelecallerClientDetails />} />
         <Route path="logout-report" element={<AuthMonitoring />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />

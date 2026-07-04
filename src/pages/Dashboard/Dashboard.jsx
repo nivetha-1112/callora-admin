@@ -8,6 +8,8 @@ import StatusChip from '../../components/StatusChip/StatusChip';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import { dashboardStats, dailyCallData, telecallerPerformance, leadStatusData, monthlyCallReport, recentLoginActivities, recentCallLogs, latestTelecallers } from '../../data/dashboardData';
 import { formatDate, timeAgo, getInitials, getStatusColor } from '../../utils/helpers';
+import { telecallers } from '../../data/telecallerData';
+import { mockClients } from '../../data/clientManagementData';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -184,9 +186,19 @@ export default function Dashboard() {
               {recentLoginActivities.slice(0, 5).map((activity) => (
                 <Box
                   key={activity.id}
+                  onClick={() => navigate('/logout-report')}
                   sx={{
                     display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
                     borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    borderRadius: 1.5,
+                    px: 1,
+                    mx: -1,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: '#f1f5f9',
+                      transform: 'translateX(4px)'
+                    },
                     '&:last-child': { borderBottom: 'none' },
                   }}
                 >
@@ -216,25 +228,41 @@ export default function Dashboard() {
                   <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
-              {recentCallLogs.slice(0, 5).map((log) => (
-                <Box
-                  key={log.id}
-                  sx={{
-                    display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
-                    borderBottom: '1px solid #f3f4f6',
-                    '&:last-child': { borderBottom: 'none' },
-                  }}
-                >
-                  <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}>
-                    <i className="bi bi-telephone-inbound" style={{ fontSize: '0.9rem', color: '#475569' }}></i>
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.3 }}>{log.client}</Typography>
-                    <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>by {log.telecaller} • {log.duration}</Typography>
+              {recentCallLogs.slice(0, 5).map((log) => {
+                const cl = mockClients.find(c => c.clientName.toLowerCase() === log.client.toLowerCase());
+                const tcId = cl ? cl.telecallerId : (telecallers.find(t => t.name.toLowerCase() === log.telecaller.toLowerCase())?.id || 'TC001');
+                const clientId = cl ? cl.id : 'CLI101';
+
+                return (
+                  <Box
+                    key={log.id}
+                    onClick={() => navigate(`/telecallers/${tcId}/clients/${clientId}`)}
+                    sx={{
+                      display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
+                      borderBottom: '1px solid #f3f4f6',
+                      cursor: 'pointer',
+                      borderRadius: 1.5,
+                      px: 1,
+                      mx: -1,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: '#f1f5f9',
+                        transform: 'translateX(4px)'
+                      },
+                      '&:last-child': { borderBottom: 'none' },
+                    }}
+                  >
+                    <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}>
+                      <i className="bi bi-telephone-inbound" style={{ fontSize: '0.9rem', color: '#475569' }}></i>
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.3 }}>{log.client}</Typography>
+                      <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>by {log.telecaller} • {log.duration}</Typography>
+                    </Box>
+                    <StatusChip status={log.status} size="small" />
                   </Box>
-                  <StatusChip status={log.status} size="small" />
-                </Box>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </Grid>
@@ -249,25 +277,40 @@ export default function Dashboard() {
                   <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
-              {latestTelecallers.map((tc) => (
-                <Box
-                  key={tc.id}
-                  sx={{
-                    display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
-                    borderBottom: '1px solid #f3f4f6',
-                    '&:last-child': { borderBottom: 'none' },
-                  }}
-                >
-                  <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
-                    {getInitials(tc.name)}
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.3 }}>{tc.name}</Typography>
-                    <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>{tc.department} • Joined {formatDate(tc.joinDate)}</Typography>
+              {latestTelecallers.map((tcItem) => {
+                const tc = telecallers.find(t => t.name.toLowerCase() === tcItem.name.toLowerCase());
+                const tcId = tc ? tc.id : 'TC001';
+
+                return (
+                  <Box
+                    key={tcItem.id}
+                    onClick={() => navigate(`/telecallers/${tcId}/clients`)}
+                    sx={{
+                      display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
+                      borderBottom: '1px solid #f3f4f6',
+                      cursor: 'pointer',
+                      borderRadius: 1.5,
+                      px: 1,
+                      mx: -1,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: '#f1f5f9',
+                        transform: 'translateX(4px)'
+                      },
+                      '&:last-child': { borderBottom: 'none' },
+                    }}
+                  >
+                    <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
+                      {getInitials(tcItem.name)}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.3 }}>{tcItem.name}</Typography>
+                      <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>{tcItem.department} • Joined {formatDate(tcItem.joinDate)}</Typography>
+                    </Box>
+                    <StatusChip status={tcItem.status} size="small" />
                   </Box>
-                  <StatusChip status={tc.status} size="small" />
-                </Box>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </Grid>

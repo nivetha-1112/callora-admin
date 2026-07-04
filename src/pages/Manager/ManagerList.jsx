@@ -4,7 +4,7 @@ import {
   InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TablePagination, Avatar, IconButton, Tooltip, Chip, InputAdornment, Dialog,
   DialogTitle, DialogContent, DialogActions, Grid, TableSortLabel,
-  Checkbox, ListItemText
+  Checkbox, ListItemText, Autocomplete
 } from '@mui/material';
 
 import PageHeader from '../../components/PageHeader/PageHeader';
@@ -439,107 +439,115 @@ export default function ManagerList() {
                   />
                 </Grid>
 
-                {/* Row 2 */}
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                    Role <span style={{ color: '#ef4444' }}>*</span>
-                  </Typography>
-                  <FormControl fullWidth size="small">
-                    <Select 
-                      value={formData.role} 
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      displayEmpty
-                      renderValue={(selected) => selected || <span style={{ color: '#94a3b8' }}>Select Role</span>}
-                    >
-                      <MenuItem value="" disabled>Select Role</MenuItem>
-                      {roles.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                    Password <span style={{ color: '#ef4444' }}>*</span>
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PasscodeInput 
-                      value={formData.password} 
-                      onChange={(val) => setFormData({ ...formData, password: val })} 
-                      show={showPassword} 
-                    />
-                    <IconButton onClick={() => setShowPassword(!showPassword)} size="small">
-                      <i className={showPassword ? "bi bi-eye" : "bi bi-eye-slash"} style={{ fontSize: '1.15rem', color: '#64748b' }}></i>
-                    </IconButton>
-                  </Box>
-                </Grid>
-                
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                    Confirm Password <span style={{ color: '#ef4444' }}>*</span>
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PasscodeInput 
-                      value={formData.confirmPassword} 
-                      onChange={(val) => setFormData({ ...formData, confirmPassword: val })} 
-                      show={showConfirmPassword} 
-                    />
-                    <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} size="small">
-                      <i className={showConfirmPassword ? "bi bi-eye" : "bi bi-eye-slash"} style={{ fontSize: '1.15rem', color: '#64748b' }}></i>
-                    </IconButton>
-                  </Box>
-                </Grid>
-
-                {/* Row 3 */}
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                    Status
-                  </Typography>
-                  <FormControl fullWidth size="small">
-                    <Select 
-                      value={formData.status} 
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    >
-                      <MenuItem value="Active">Active</MenuItem>
-                      <MenuItem value="Inactive">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Telecaller assignment grid inside form (aligned beside Status) */}
-                <Grid size={{ xs: 12, md: 8 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                    Assign Telecallers
-                  </Typography>
-                  <FormControl fullWidth size="small">
-                    <Select
-                      multiple
-                      value={formData.assignedTelecallers}
-                      onChange={(e) => setFormData({ ...formData, assignedTelecallers: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value })}
-                      renderValue={(selected) => {
-                        return selected.map(id => telecallerList.find(tc => tc.id === id)?.name).filter(Boolean).join(', ');
-                      }}
-                      displayEmpty
-                      renderValueEmpty={() => <span style={{ color: '#94a3b8' }}>Assign Telecallers</span>}
-                      MenuProps={{
-                        PaperProps: {
-                          sx: { maxHeight: 250 }
-                        }
-                      }}
-                    >
-                      {telecallerList.map((tc) => (
-                        <MenuItem key={tc.id} value={tc.id}>
-                          <Checkbox checked={formData.assignedTelecallers.indexOf(tc.id) > -1} size="small" />
-                          <ListItemText 
-                            primary={tc.name} 
-                            secondary={`${tc.id} • ${tc.managerName ? `Under ${tc.managerName}` : 'Unassigned'}`} 
-                            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
-                            secondaryTypographyProps={{ fontSize: '0.7rem' }}
-                          />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                 {/* Row 2 */}
+                 <Grid size={{ xs: 12, md: 4 }}>
+                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                     Role <span style={{ color: '#ef4444' }}>*</span>
+                   </Typography>
+                   <Autocomplete
+                     size="small"
+                     value={formData.role || null}
+                     onChange={(event, newValue) => {
+                       setFormData({ ...formData, role: newValue || '' });
+                     }}
+                     options={roles}
+                     renderInput={(params) => <TextField {...params} label="Role" placeholder="Select Role" />}
+                     fullWidth
+                   />
+                 </Grid>
+                 
+                 <Grid size={{ xs: 12, md: 4 }}>
+                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                     Password <span style={{ color: '#ef4444' }}>*</span>
+                   </Typography>
+                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                     <PasscodeInput 
+                       value={formData.password} 
+                       onChange={(val) => setFormData({ ...formData, password: val })} 
+                       show={showPassword} 
+                     />
+                     <IconButton onClick={() => setShowPassword(!showPassword)} size="small">
+                       <i className={showPassword ? "bi bi-eye" : "bi bi-eye-slash"} style={{ fontSize: '1.15rem', color: '#64748b' }}></i>
+                     </IconButton>
+                   </Box>
+                 </Grid>
+                 
+                 <Grid size={{ xs: 12, md: 4 }}>
+                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                     Confirm Password <span style={{ color: '#ef4444' }}>*</span>
+                   </Typography>
+                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                     <PasscodeInput 
+                       value={formData.confirmPassword} 
+                       onChange={(val) => setFormData({ ...formData, confirmPassword: val })} 
+                       show={showConfirmPassword} 
+                     />
+                     <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} size="small">
+                       <i className={showConfirmPassword ? "bi bi-eye" : "bi bi-eye-slash"} style={{ fontSize: '1.15rem', color: '#64748b' }}></i>
+                     </IconButton>
+                   </Box>
+                 </Grid>
+ 
+                 {/* Row 3 */}
+                 <Grid size={{ xs: 12, md: 4 }}>
+                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                     Status
+                   </Typography>
+                   <Autocomplete
+                     size="small"
+                     value={formData.status}
+                     onChange={(event, newValue) => {
+                       setFormData({ ...formData, status: newValue || 'Active' });
+                     }}
+                     options={['Active', 'Inactive']}
+                     renderInput={(params) => <TextField {...params} label="Status" />}
+                     fullWidth
+                     disableClearable
+                   />
+                 </Grid>
+ 
+                 {/* Telecaller assignment grid inside form (aligned beside Status) */}
+                 <Grid size={{ xs: 12, md: 8 }}>
+                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                     Assign Telecallers
+                   </Typography>
+                   <Autocomplete
+                     multiple
+                     size="small"
+                     value={telecallerList.filter(tc => formData.assignedTelecallers.includes(tc.id))}
+                     onChange={(event, newValue) => {
+                       setFormData({ ...formData, assignedTelecallers: newValue.map(item => item.id) });
+                     }}
+                     options={telecallerList}
+                     disableCloseOnSelect
+                     getOptionLabel={(option) => option.name}
+                     renderOption={(props, option, { selected }) => {
+                       const { key, ...optionProps } = props;
+                       return (
+                         <li key={option.id} {...optionProps}>
+                           <Checkbox checked={selected} size="small" style={{ marginRight: 8 }} />
+                           <ListItemText
+                             primary={option.name}
+                             secondary={`${option.id} • ${option.managerName ? `Under ${option.managerName}` : 'Unassigned'}`}
+                             primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                             secondaryTypographyProps={{ fontSize: '0.7rem' }}
+                           />
+                         </li>
+                       );
+                     }}
+                     renderInput={(params) => (
+                       <TextField {...params} label="Assign Telecallers" placeholder="Select Telecallers" />
+                     )}
+                     slotProps={{
+                       paper: {
+                         sx: {
+                           maxHeight: 250,
+                         }
+                       }
+                     }}
+                     fullWidth
+                   />
+                 </Grid>
 
               </Grid>
             </Grid>
@@ -611,16 +619,31 @@ export default function ManagerList() {
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <TextField size="small" placeholder="Search managers..." value={search} onChange={(e) => setSearch(e.target.value)}
               sx={{ minWidth: 260, flex: { xs: 1, sm: 'unset' } }}
-              InputProps={{ startAdornment: <InputAdornment position="start"><i className="bi bi-search" style={{ fontSize: '0.95rem', color: '#9ca3af' }}></i></InputAdornment> }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <i className="bi bi-search" style={{ fontSize: '0.95rem', color: '#9ca3af' }}></i>
+                    </InputAdornment>
+                  )
+                }
+              }}
             />
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label="Status">
-                <MenuItem value="All">All Status</MenuItem>
-                <MenuItem value="Active">Active</MenuItem>
-                <MenuItem value="Inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
+            <Autocomplete
+              size="small"
+              value={statusFilter === 'All' ? 'All Status' : statusFilter}
+              onChange={(event, newValue) => {
+                if (newValue === 'All Status' || !newValue) {
+                  setStatusFilter('All');
+                } else {
+                  setStatusFilter(newValue);
+                }
+              }}
+              options={['All Status', 'Active', 'Inactive']}
+              renderInput={(params) => <TextField {...params} label="Status" />}
+              sx={{ minWidth: 150 }}
+              disableClearable
+            />
             <Box sx={{ flex: 1 }} />
             <ExportMenu onExport={(f) => showToast(`Exporting as ${f}...`, 'info')} />
           </Box>

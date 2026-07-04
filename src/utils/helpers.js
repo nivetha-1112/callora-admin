@@ -34,20 +34,27 @@ export const getInitials = (name) => {
 
 export const getStatusColor = (status) => {
   const map = {
-    active: '#10b981',
-    inactive: '#ef4444',
-    interested: '#10b981',
-    'not interested': '#ef4444',
-    ringing: '#f59e0b',
-    'follow up': '#3b82f6',
-    'callback requested': '#8b5cf6',
-    converted: '#059669',
-    'logged in': '#10b981',
-    'logged out': '#6b7280',
-    'session expired': '#f59e0b',
-    pending: '#f59e0b',
-    completed: '#10b981',
-    missed: '#ef4444',
+    active: '#10b981',             // Emerald Green
+    inactive: '#ef4444',           // Bright Red
+    interested: '#16a34a',         // Grass Green
+    'not interested': '#dc2626',   // Crimson Red
+    ringing: '#ca8a04',            // Gold
+    'follow up': '#ea580c',        // Dark Orange
+    'follow-up required': '#f97316', // Orange
+    'follow-up scheduled': '#b45309', // Amber Orange
+    'callback requested': '#7c3aed', // Purple
+    converted: '#0d9488',          // Teal
+    'logged in': '#65a30d',        // Lime Green
+    'logged out': '#4b5563',       // Dark Grey
+    'session expired': '#d97706',  // Amber
+    'failed login': '#db2777',     // Deep Pink
+    'new lead': '#3b82f6',         // Indigo-blue
+    'lead received': '#0284c7',    // Sky Blue
+    'lead created': '#4b5563',     // Slate Grey
+    contacted: '#4f46e5',          // Indigo
+    pending: '#a1a1aa',            // Light zinc grey
+    completed: '#059669',          // Dark Emerald
+    missed: '#be123c',             // Rose red
   };
   return map[status?.toLowerCase()] || '#6b7280';
 };
@@ -56,18 +63,25 @@ export const getStatusBgColor = (status) => {
   const map = {
     active: '#d1fae5',
     inactive: '#fee2e2',
-    interested: '#d1fae5',
-    'not interested': '#fee2e2',
-    ringing: '#fef3c7',
-    'follow up': '#dbeafe',
-    'callback requested': '#ede9fe',
-    converted: '#d1fae5',
-    'logged in': '#d1fae5',
+    interested: '#f0fdf4',
+    'not interested': '#fef2f2',
+    ringing: '#fef9c3',
+    'follow up': '#fff7ed',
+    'follow-up required': '#ffedd5',
+    'follow-up scheduled': '#fef3c7',
+    'callback requested': '#f5f3ff',
+    converted: '#f0fdfa',
+    'logged in': '#f7fee7',
     'logged out': '#f3f4f6',
-    'session expired': '#fef3c7',
-    pending: '#fef3c7',
-    completed: '#d1fae5',
-    missed: '#fee2e2',
+    'session expired': '#fffbeb',
+    'failed login': '#fdf2f8',
+    'new lead': '#dbeafe',
+    'lead received': '#e0f2fe',
+    'lead created': '#f1f5f9',
+    contacted: '#e0e7ff',
+    pending: '#f4f4f5',
+    completed: '#ecfdf5',
+    missed: '#ffe4e6',
   };
   return map[status?.toLowerCase()] || '#f3f4f6';
 };
