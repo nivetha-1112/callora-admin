@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, Grid, Checkbox, FormControlLabel
+  DialogContent, DialogActions, TextField, Grid, Checkbox, FormControlLabel,
+  Tooltip
 } from '@mui/material';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import { useToast } from '../../context/ToastContext';
@@ -87,12 +88,17 @@ export default function RolesPermissions() {
     setOpen(false);
   };
 
+  const handleDeleteClick = (id) => {
+    setRoleList(prev => prev.filter(r => r.id !== id));
+    showToast('Role deleted successfully!', 'success');
+  };
+
   return (
     <Box>
       <PageHeader
-        title="Roles & Permissions"
+        title="Roles"
         subtitle="Manage user roles, authorization levels, and platform access control"
-        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Roles & Permissions' }]}
+        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Roles' }]}
         actions={
           <Button
             variant="contained"
@@ -111,16 +117,19 @@ export default function RolesPermissions() {
             <Table sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ pl: 4 }}>Role Name</TableCell>
-                  <TableCell>Permissions</TableCell>
-                  <TableCell align="center">Users Count</TableCell>
-                  <TableCell align="center" sx={{ pr: 4 }}>Actions</TableCell>
+                  <TableCell align="center" sx={{ pl: 4 }}>S.No</TableCell>
+                  <TableCell>Roll Name</TableCell>
+                  <TableCell align="center">User Count</TableCell>
+                  <TableCell align="center" sx={{ pr: 4 }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {roleList.map((role) => (
+                {roleList.map((role, index) => (
                   <TableRow key={role.id} hover>
-                    <TableCell sx={{ pl: 4 }}>
+                    <TableCell align="center" sx={{ pl: 4, fontWeight: 500, color: 'text.secondary' }}>
+                      {index + 1}
+                    </TableCell>
+                    <TableCell>
                       <Chip 
                         label={role.name} 
                         sx={{ 
@@ -130,11 +139,6 @@ export default function RolesPermissions() {
                           borderRadius: '6px'
                         }} 
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {role.permissions}
-                      </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Chip 
@@ -148,13 +152,26 @@ export default function RolesPermissions() {
                       />
                     </TableCell>
                     <TableCell align="center" sx={{ pr: 4 }}>
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleEditClick(role)}
-                        sx={{ color: '#64748b', '&:hover': { color: '#0343a8', backgroundColor: '#eaf4ff' } }}
-                      >
-                        <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
-                      </IconButton>
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                        <Tooltip title="Edit">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleEditClick(role)}
+                            sx={{ color: '#64748b', '&:hover': { color: '#0343a8', backgroundColor: '#eaf4ff' } }}
+                          >
+                            <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleDeleteClick(role.id)}
+                            sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}
+                          >
+                            <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}

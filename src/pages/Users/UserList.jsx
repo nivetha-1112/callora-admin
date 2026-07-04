@@ -10,7 +10,7 @@ import {
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusChip from '../../components/StatusChip/StatusChip';
 import ExportMenu from '../../components/ExportMenu/ExportMenu';
-import { managers } from '../../data/managerData';
+import { managers as initialUsers } from '../../data/managerData';
 import { telecallers } from '../../data/telecallerData';
 import { getInitials } from '../../utils/helpers';
 import useDebounce from '../../hooks/useDebounce';
@@ -84,23 +84,23 @@ const PasscodeInput = ({ value, onChange, show }) => {
   );
 };
 
-export default function ManagerList() {
+export default function UserList() {
   const { showToast } = useToast();
-  const [managerList, setManagerList] = useState(managers);
+  const [userList, setUserList] = useState(initialUsers);
   const [telecallerList, setTelecallerList] = useState(telecallers);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [roleFilter, setRoleFilter] = useState('All');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [orderBy, setOrderBy] = useState('name');
   const [order, setOrder] = useState('asc');
-  const [selectedManager, setSelectedManager] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const debouncedSearch = useDebounce(search);
 
   // viewMode can be 'list' | 'add' | 'edit'
   const [viewMode, setViewMode] = useState('list');
   const [isEdit, setIsEdit] = useState(false);
-  const [editingManagerId, setEditingManagerId] = useState(null);
+  const [editingUserId, setEditingUserId] = useState(null);
   
   // Password Visibility States
   const [showPassword, setShowPassword] = useState(false);
@@ -119,29 +119,27 @@ export default function ManagerList() {
     assignedTelecallers: []
   });
 
-
-
   const getAssignedCount = (mgrId) => {
     return telecallerList.filter((t) => t.managerId === mgrId).length;
   };
 
-  const handleEditClick = (manager) => {
+  const handleEditClick = (user) => {
     const assignedIds = telecallerList
-      .filter((tc) => tc.managerId === manager.id)
+      .filter((tc) => tc.managerId === user.id)
       .map((tc) => tc.id);
 
     setFormData({
-      name: manager.name,
-      email: manager.email,
-      mobile: manager.mobile,
-      role: manager.role || 'Manager',
+      name: user.name,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.role || 'Manager',
       password: ['', '', '', ''],
       confirmPassword: ['', '', '', ''],
-      status: manager.status || 'Active',
-      photo: manager.photo || null,
+      status: user.status || 'Active',
+      photo: user.photo || null,
       assignedTelecallers: assignedIds
     });
-    setEditingManagerId(manager.id);
+    setEditingUserId(user.id);
     setIsEdit(true);
     setViewMode('edit');
   };
@@ -158,7 +156,7 @@ export default function ManagerList() {
       photo: null,
       assignedTelecallers: []
     });
-    setEditingManagerId(null);
+    setEditingUserId(null);
     setIsEdit(false);
     setViewMode('add');
   };
@@ -187,14 +185,14 @@ export default function ManagerList() {
       return;
     }
 
-    let managerId = editingManagerId;
+    let userId = editingUserId;
 
     if (isEdit) {
-      setManagerList((prev) =>
-        prev.map((m) =>
-          m.id === editingManagerId
+      setUserList((prev) =>
+        prev.map((u) =>
+          u.id === editingUserId
             ? { 
-                ...m, 
+                ...u, 
                 name: formData.name, 
                 email: formData.email, 
                 mobile: formData.mobile, 
@@ -202,15 +200,15 @@ export default function ManagerList() {
                 status: formData.status,
                 photo: formData.photo 
               }
-            : m
+            : u
         )
       );
-      showToast('Manager updated successfully!', 'success');
+      showToast('User updated successfully!', 'success');
     } else {
-      const newId = `MGR${String(managerList.length + 1).padStart(3, '0')}`;
-      managerId = newId;
+      const newId = `USR${String(userList.length + 1).padStart(3, '0')}`;
+      userId = newId;
 
-      const newManager = {
+      const newUser = {
         id: newId,
         name: formData.name,
         email: formData.email,
@@ -225,16 +223,16 @@ export default function ManagerList() {
         performance: 100
       };
 
-      setManagerList((prev) => [...prev, newManager]);
-      showToast('Manager added successfully!', 'success');
+      setUserList((prev) => [...prev, newUser]);
+      showToast('User added successfully!', 'success');
     }
 
     // Update telecaller assignments
     setTelecallerList((prev) =>
       prev.map((tc) => {
         if (formData.assignedTelecallers.includes(tc.id)) {
-          return { ...tc, managerId: managerId, managerName: formData.name };
-        } else if (tc.managerId === managerId) {
+          return { ...tc, managerId: userId, managerName: formData.name };
+        } else if (tc.managerId === userId) {
           return { ...tc, managerId: null, managerName: '' };
         }
         return tc;
@@ -244,22 +242,20 @@ export default function ManagerList() {
     setViewMode('list');
   };
 
-
-
   const filtered = useMemo(() => {
-    return managerList.filter((m) => {
-      const matchSearch = m.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        m.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        m.id.toLowerCase().includes(debouncedSearch.toLowerCase());
-      const matchStatus = statusFilter === 'All' || m.status === statusFilter;
-      return matchSearch && matchStatus;
+    return userList.filter((u) => {
+      const matchSearch = u.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        u.id.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const matchRole = roleFilter === 'All' || u.role === roleFilter;
+      return matchSearch && matchRole;
     }).sort((a, b) => {
       const val = order === 'asc' ? 1 : -1;
       if (a[orderBy] < b[orderBy]) return -val;
       if (a[orderBy] > b[orderBy]) return val;
       return 0;
     });
-  }, [managerList, debouncedSearch, statusFilter, orderBy, order]);
+  }, [userList, debouncedSearch, roleFilter, orderBy, order]);
 
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -267,27 +263,28 @@ export default function ManagerList() {
     setOrderBy(property);
   };
 
-
-
   const handleStatusChange = (id, newStatus) => {
-    setManagerList((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m))
+    setUserList((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, status: newStatus } : u))
     );
   };
 
-  const activeManagerDetails = selectedManager
-    ? managerList.find((m) => m.id === selectedManager.id) || selectedManager
+  const handleDeleteClick = (id) => {
+    setUserList((prev) => prev.filter((u) => u.id !== id));
+    showToast('User deleted successfully!', 'success');
+  };
+
+  const activeUserDetails = selectedUser
+    ? userList.find((u) => u.id === selectedUser.id) || selectedUser
     : null;
 
-  const assignedTelecallers = activeManagerDetails
-    ? telecallerList.filter((t) => t.managerId === activeManagerDetails.id)
+  const assignedTelecallers = activeUserDetails
+    ? telecallerList.filter((t) => t.managerId === activeUserDetails.id)
     : [];
 
   if (viewMode !== 'list') {
-    // REDESIGNED ADD/EDIT MANAGER PAGE (FULL-SCREEN FORM VIEW)
     return (
       <Box>
-        {/* Banner with modern theme-aligned blue gradient */}
         <Box 
           sx={{ 
             background: 'linear-gradient(135deg, #0343a8 0%, #022d71 100%)', 
@@ -300,7 +297,7 @@ export default function ManagerList() {
           }}
         >
           <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 700, letterSpacing: '0.05em' }}>
-            {viewMode === 'add' ? 'ADD MANAGER' : 'EDIT MANAGER'}
+            {viewMode === 'add' ? 'ADD USER' : 'EDIT USER'}
           </Typography>
           <Button 
             variant="contained" 
@@ -321,18 +318,16 @@ export default function ManagerList() {
               }
             }}
           >
-            List Manager
+            List Users
           </Button>
         </Box>
 
-        {/* Form Container Card */}
         <Card sx={{ borderRadius: '0 0 12px 12px', border: '1px solid #e2e8f0', borderTop: 'none', p: 4, backgroundColor: '#ffffff' }}>
           <Typography variant="h5" sx={{ color: '#0343a8', fontWeight: 700, mb: 4 }}>
             Basic Information
           </Typography>
 
           <Grid container spacing={4}>
-            {/* Left side - Profile Image Picker */}
             <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1.5, alignSelf: 'flex-start' }}>
                 Profile Image <span style={{ color: '#ef4444' }}>*</span>
@@ -397,10 +392,8 @@ export default function ManagerList() {
               </Button>
             </Grid>
 
-            {/* Right side - Fields Grid */}
             <Grid size={{ xs: 12, md: 9 }}>
               <Grid container spacing={3}>
-                {/* Row 1 */}
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
                     Name <span style={{ color: '#ef4444' }}>*</span>
@@ -439,7 +432,6 @@ export default function ManagerList() {
                   />
                 </Grid>
 
-                 {/* Row 2 */}
                  <Grid size={{ xs: 12, md: 4 }}>
                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
                      Role <span style={{ color: '#ef4444' }}>*</span>
@@ -487,8 +479,7 @@ export default function ManagerList() {
                      </IconButton>
                    </Box>
                  </Grid>
- 
-                 {/* Row 3 */}
+  
                  <Grid size={{ xs: 12, md: 4 }}>
                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
                      Status
@@ -505,55 +496,11 @@ export default function ManagerList() {
                      disableClearable
                    />
                  </Grid>
- 
-                 {/* Telecaller assignment grid inside form (aligned beside Status) */}
-                 <Grid size={{ xs: 12, md: 8 }}>
-                   <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                     Assign Telecallers
-                   </Typography>
-                   <Autocomplete
-                     multiple
-                     size="small"
-                     value={telecallerList.filter(tc => formData.assignedTelecallers.includes(tc.id))}
-                     onChange={(event, newValue) => {
-                       setFormData({ ...formData, assignedTelecallers: newValue.map(item => item.id) });
-                     }}
-                     options={telecallerList}
-                     disableCloseOnSelect
-                     getOptionLabel={(option) => option.name}
-                     renderOption={(props, option, { selected }) => {
-                       const { key, ...optionProps } = props;
-                       return (
-                         <li key={option.id} {...optionProps}>
-                           <Checkbox checked={selected} size="small" style={{ marginRight: 8 }} />
-                           <ListItemText
-                             primary={option.name}
-                             secondary={`${option.id} • ${option.managerName ? `Under ${option.managerName}` : 'Unassigned'}`}
-                             primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
-                             secondaryTypographyProps={{ fontSize: '0.7rem' }}
-                           />
-                         </li>
-                       );
-                     }}
-                     renderInput={(params) => (
-                       <TextField {...params} label="Assign Telecallers" placeholder="Select Telecallers" />
-                     )}
-                     slotProps={{
-                       paper: {
-                         sx: {
-                           maxHeight: 250,
-                         }
-                       }
-                     }}
-                     fullWidth
-                   />
-                 </Grid>
 
               </Grid>
             </Grid>
           </Grid>
 
-          {/* Form Actions */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 5 }}>
             <Button 
               variant="outlined" 
@@ -598,49 +545,47 @@ export default function ManagerList() {
     );
   }
 
-  // viewMode === 'list' (DEFAULT TABLE VIEW)
   return (
     <Box>
       <PageHeader
-        title="Manager Management"
-        subtitle="Manage and monitor all telecalling managers"
-        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Managers' }]}
+        title="User Management"
+        subtitle="Manage and monitor all telecalling users"
+        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Users' }]}
         actions={
           <Button variant="contained" startIcon={<i className="bi bi-plus-lg"></i>} onClick={handleAddClick}
             sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 3 }}>
-            Add Manager
+            Add User
           </Button>
         }
       />
 
-      {/* Filters (Removed Department dropdown filter) */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-            <TextField size="small" placeholder="Search managers..." value={search} onChange={(e) => setSearch(e.target.value)}
+            <TextField size="small" placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)}
               sx={{ minWidth: 260, flex: { xs: 1, sm: 'unset' } }}
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <i className="bi bi-search" style={{ fontSize: '0.95rem', color: '#9ca3af' }}></i>
-                    </InputAdornment>
+                     <InputAdornment position="start">
+                       <i className="bi bi-search" style={{ fontSize: '0.95rem', color: '#9ca3af' }}></i>
+                     </InputAdornment>
                   )
                 }
               }}
             />
             <Autocomplete
               size="small"
-              value={statusFilter === 'All' ? 'All Status' : statusFilter}
+              value={roleFilter === 'All' ? 'All Roles' : roleFilter}
               onChange={(event, newValue) => {
-                if (newValue === 'All Status' || !newValue) {
-                  setStatusFilter('All');
+                if (newValue === 'All Roles' || !newValue) {
+                  setRoleFilter('All');
                 } else {
-                  setStatusFilter(newValue);
+                  setRoleFilter(newValue);
                 }
               }}
-              options={['All Status', 'Active', 'Inactive']}
-              renderInput={(params) => <TextField {...params} label="Status" />}
+              options={['All Roles', ...roles]}
+              renderInput={(params) => <TextField {...params} label="Role" />}
               sx={{ minWidth: 150 }}
               disableClearable
             />
@@ -650,68 +595,45 @@ export default function ManagerList() {
         </CardContent>
       </Card>
 
-      {/* Table (Removed Department column) */}
       <Card>
         <TableContainer>
           <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'id'} direction={orderBy === 'id' ? order : 'asc'} onClick={() => handleSort('id')}>Manager ID</TableSortLabel></TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Manager Name</TableSortLabel></TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap', pl: 3 }}>Emp ID</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><TableSortLabel active={orderBy === 'name'} direction={orderBy === 'name' ? order : 'asc'} onClick={() => handleSort('name')}>Name</TableSortLabel></TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>Email</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Mobile</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Role</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Telecallers</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((mgr) => (
-                <TableRow key={mgr.id} hover>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#0343a8', whiteSpace: 'nowrap' }}>{mgr.id}</Typography>
+              {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user, index) => (
+                <TableRow key={user.id} hover>
+                  <TableCell sx={{ whiteSpace: 'nowrap', pl: 3, fontWeight: 600, color: '#0343a8' }}>
+                    {user.id}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
-                      <Avatar 
-                        src={mgr.photo}
-                        sx={{ width: 36, height: 36, fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}
-                      >
-                        {!mgr.photo && getInitials(mgr.name)}
-                      </Avatar>
-                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{mgr.name}</Typography>
-                    </Box>
+                  <TableCell sx={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+                    {user.name}
                   </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{mgr.email}</Typography></TableCell>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{mgr.mobile}</Typography></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{user.email}</Typography></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{user.mobile}</Typography></TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                    <Chip label={mgr.role || 'Manager'} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', fontWeight: 500 }} />
-                  </TableCell>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                    <Chip
-                      icon={<i className="bi bi-people-fill" style={{ color: '#059669', fontSize: '0.8rem', marginLeft: '6px' }}></i>}
-                      label={getAssignedCount(mgr.id)}
-                      size="small"
-                      sx={{
-                        backgroundColor: '#f0fdf4',
-                        color: '#059669',
-                        fontWeight: 700,
-                        pr: 0.5
-                      }}
-                    />
+                    <Chip label={user.role || 'Manager'} size="small" sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', fontWeight: 500 }} />
                   </TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Select
-                      value={mgr.status}
-                      onChange={(e) => handleStatusChange(mgr.id, e.target.value)}
+                      value={user.status}
+                      onChange={(e) => handleStatusChange(user.id, e.target.value)}
                       size="small"
                       sx={{
                         fontSize: '0.75rem',
                         fontWeight: 600,
-                        color: mgr.status === 'Active' ? '#059669' : '#ef4444',
-                        backgroundColor: mgr.status === 'Active' ? '#f0fdf4' : '#fee2e2',
-                        border: `1px solid ${mgr.status === 'Active' ? '#10b981' : '#fecaca'}`,
+                        color: user.status === 'Active' ? '#059669' : '#ef4444',
+                        backgroundColor: user.status === 'Active' ? '#f0fdf4' : '#fee2e2',
+                        border: `1px solid ${user.status === 'Active' ? '#10b981' : '#fecaca'}`,
                         borderRadius: '8px',
                         height: 24,
                         '& .MuiSelect-select': {
@@ -723,7 +645,7 @@ export default function ManagerList() {
                           border: 'none',
                         },
                         '& .MuiSvgIcon-root': {
-                          color: mgr.status === 'Active' ? '#059669' : '#ef4444',
+                          color: user.status === 'Active' ? '#059669' : '#ef4444',
                           right: '6px',
                           fontSize: '1rem',
                         }
@@ -736,12 +658,12 @@ export default function ManagerList() {
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
                       <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => handleEditClick(mgr)} sx={{ color: '#64748b', '&:hover': { color: '#d97706', backgroundColor: '#fef3c7' } }}>
+                        <IconButton size="small" onClick={() => handleEditClick(user)} sx={{ color: '#64748b', '&:hover': { color: '#d97706', backgroundColor: '#fef3c7' } }}>
                           <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton size="small" sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}>
+                        <IconButton size="small" onClick={() => handleDeleteClick(user.id)} sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}>
                           <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
                         </IconButton>
                       </Tooltip>
@@ -762,7 +684,6 @@ export default function ManagerList() {
           onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
         />
       </Card>
-
     </Box>
   );
 }

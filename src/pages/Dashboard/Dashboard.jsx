@@ -179,18 +179,16 @@ export default function Dashboard() {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>Recent Logins</Typography>
-                <IconButton size="small" onClick={() => navigate('/logout-report')}>
+                <IconButton size="small" onClick={() => navigate('/activities')}>
                   <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
               {recentLoginActivities.slice(0, 5).map((activity) => (
                 <Box
                   key={activity.id}
-                  onClick={() => navigate('/logout-report')}
                   sx={{
                     display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
                     borderBottom: '1px solid #f3f4f6',
-                    cursor: 'pointer',
                     borderRadius: 1.5,
                     px: 1,
                     mx: -1,
@@ -224,7 +222,7 @@ export default function Dashboard() {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>Recent Calls</Typography>
-                <IconButton size="small" onClick={() => navigate('/reports')}>
+                <IconButton size="small" onClick={() => navigate('/activities')}>
                   <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
@@ -236,11 +234,9 @@ export default function Dashboard() {
                 return (
                   <Box
                     key={log.id}
-                    onClick={() => navigate(`/telecallers/${tcId}/clients/${clientId}`)}
                     sx={{
                       display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
                       borderBottom: '1px solid #f3f4f6',
-                      cursor: 'pointer',
                       borderRadius: 1.5,
                       px: 1,
                       mx: -1,
@@ -273,7 +269,7 @@ export default function Dashboard() {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>New Telecallers</Typography>
-                <IconButton size="small" onClick={() => navigate('/telecallers')}>
+                <IconButton size="small" onClick={() => navigate('/reports')}>
                   <i className="bi bi-arrow-right" style={{ fontSize: '1rem', color: '#0343a8' }}></i>
                 </IconButton>
               </Box>
@@ -284,11 +280,9 @@ export default function Dashboard() {
                 return (
                   <Box
                     key={tcItem.id}
-                    onClick={() => navigate(`/telecallers/${tcId}/clients`)}
                     sx={{
                       display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5,
                       borderBottom: '1px solid #f3f4f6',
-                      cursor: 'pointer',
                       borderRadius: 1.5,
                       px: 1,
                       mx: -1,
@@ -322,10 +316,10 @@ export default function Dashboard() {
           <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>Quick Actions</Typography>
           <Grid container spacing={2}>
             {[
-              { label: 'Add Manager', iconClass: 'bi bi-person-plus', path: '/managers' },
-              { label: 'Add Telecaller', iconClass: 'bi bi-headset', path: '/telecallers' },
+              { label: 'Add User', iconClass: 'bi bi-person-plus', path: '/users' },
+              { label: 'Assign Client', iconClass: 'bi bi-person-plus-fill', path: '/assign-client' },
+              { label: 'Team Target', iconClass: 'bi bi-crosshair', path: '/team-target' },
               { label: 'View Reports', iconClass: 'bi bi-bar-chart-line', path: '/reports' },
-              { label: 'Export Data', iconClass: 'bi bi-download', path: '/reports' },
             ].map((action) => (
               <Grid size={{ xs: 6, sm: 3 }} key={action.label}>
                 <Button

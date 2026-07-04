@@ -9,20 +9,19 @@ import {
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusChip from '../../components/StatusChip/StatusChip';
-import { managers } from '../../data/managerData';
+import { managers as initialUsers } from '../../data/managerData';
 import { getInitials } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 import useDebounce from '../../hooks/useDebounce';
 
-// We import telecallers and telecallerClients from telecallerData
 import { telecallers as teleData, telecallerClients } from '../../data/telecallerData';
 
 export default function AssignClient() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [managerList] = useState(managers);
+  const [userList] = useState(initialUsers);
   const [telecallerList, setTelecallerList] = useState(teleData);
-  const [selectedManagerId, setSelectedManagerId] = useState('All');
+  const [selectedUserId, setSelectedUserId] = useState('All');
   
   // Table state
   const [page, setPage] = useState(0);
@@ -210,35 +209,35 @@ export default function AssignClient() {
   // Filter telecallers by selected manager and search keyword
   const filteredTelecallers = useMemo(() => {
     return telecallerList.filter(tc => {
-      const matchManager = selectedManagerId === 'All' || tc.managerId === selectedManagerId;
+      const matchManager = selectedUserId === 'All' || tc.managerId === selectedUserId;
       const matchSearch = tc.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                           tc.id.toLowerCase().includes(debouncedSearch.toLowerCase());
       return matchManager && matchSearch;
     });
-  }, [telecallerList, selectedManagerId, debouncedSearch]);
+  }, [telecallerList, selectedUserId, debouncedSearch]);
 
   return (
     <Box>
       <PageHeader
         title="Assign Client"
         subtitle="Manage and assign client databases to telecallers"
-        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Managers', path: '/managers' }, { label: 'Assign Client' }]}
+        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Users', path: '/users' }, { label: 'Assign Client' }]}
       />
 
-      {/* Filters: Select Manager and Search Employee Name */}
+      {/* Filters: Select User and Search Employee Name */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <Autocomplete
               size="small"
-              value={selectedManagerId === 'All' ? { id: 'All', name: 'All Managers' } : (managerList.find((m) => m.id === selectedManagerId) || null)}
+              value={selectedUserId === 'All' ? { id: 'All', name: 'All Users' } : (userList.find((u) => u.id === selectedUserId) || null)}
               onChange={(event, newValue) => {
-                setSelectedManagerId(newValue ? newValue.id : 'All');
+                setSelectedUserId(newValue ? newValue.id : 'All');
                 setPage(0);
               }}
-              options={[{ id: 'All', name: 'All Managers' }, ...managerList]}
+              options={[{ id: 'All', name: 'All Users' }, ...userList]}
               getOptionLabel={(option) => option.id === 'All' ? option.name : `${option.name} (${option.id})`}
-              renderInput={(params) => <TextField {...params} label="Filter by Manager" />}
+              renderInput={(params) => <TextField {...params} label="Filter by User" />}
               sx={{ minWidth: 260 }}
               disableClearable
             />
@@ -262,6 +261,34 @@ export default function AssignClient() {
                 }
               }}
             />
+            <Box sx={{ flex: 1 }} />
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<i className="bi bi-upload"></i>}
+              onClick={() => {
+                if (filteredTelecallers.length > 0) {
+                  handleAssignClick(filteredTelecallers[0]);
+                } else {
+                  showToast('No employees found to assign databases to.', 'warning');
+                }
+              }}
+              sx={{
+                background: 'linear-gradient(135deg, #0343a8, #0454cc)',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 2.5,
+                py: 1,
+                boxShadow: 'none',
+                '&:hover': {
+                  background: '#022d71',
+                  boxShadow: 'none'
+                }
+              }}
+            >
+              Bulk Upload
+            </Button>
           </Box>
         </CardContent>
       </Card>
@@ -269,17 +296,15 @@ export default function AssignClient() {
       {/* Telecallers Table */}
       <Card>
         <TableContainer>
-          <Table sx={{ minWidth: 1100 }}>
+          <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
-                <TableCell align="center" sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>S.No</TableCell>
-                <TableCell sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Emp ID</TableCell>
-                <TableCell sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Employee Name</TableCell>
-                <TableCell sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Manager Name</TableCell>
-                <TableCell align="center" sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Assigned Clients</TableCell>
-                <TableCell align="center" sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Status</TableCell>
-                <TableCell align="center" sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Action</TableCell>
-                <TableCell align="center" sx={{ backgroundColor: '#a80f14', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Bulk Upload</TableCell>
+                <TableCell align="center" sx={{ backgroundColor: '#0343a8', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>S.No</TableCell>
+                <TableCell sx={{ backgroundColor: '#0343a8', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Emp ID</TableCell>
+                <TableCell sx={{ backgroundColor: '#0343a8', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Employee Name</TableCell>
+                <TableCell align="center" sx={{ backgroundColor: '#0343a8', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Database Count</TableCell>
+                <TableCell align="center" sx={{ backgroundColor: '#0343a8', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Clients</TableCell>
+                <TableCell align="center" sx={{ backgroundColor: '#0343a8', color: '#ffffff', fontWeight: 'bold', fontSize: '0.875rem', py: 1.5 }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -289,7 +314,7 @@ export default function AssignClient() {
                   <TableRow 
                     key={tc.id} 
                     hover
-                    onClick={() => navigate(`/telecallers/${tc.id}/clients`)}
+                    onClick={() => navigate(`/users/employee-detail/${tc.id}`)}
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell align="center" sx={{ fontWeight: 500, color: '#4b5563' }}>{serialNo}</TableCell>
@@ -307,8 +332,10 @@ export default function AssignClient() {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#475569' }}>{tc.managerName || 'Unassigned'}</Typography>
+                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                      <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#475569' }}>
+                        {tc.totalCalls || 0}
+                      </Typography>
                     </TableCell>
                     <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                       <Typography 
@@ -321,66 +348,29 @@ export default function AssignClient() {
                         {tc.totalClients || tc.interested + tc.notInterested}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><StatusChip status={tc.status} /></TableCell>
                     <TableCell align="center" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                        <Tooltip title="Edit">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => showToast(`Edit functionality for ${tc.name}`, 'info')}
-                            sx={{ 
-                              color: '#ea580c', 
-                              backgroundColor: '#fef3c7', 
-                              width: 32, 
-                              height: 32,
-                              '&:hover': { backgroundColor: '#ffedd5' } 
-                            }}
-                          >
-                            <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => showToast(`Delete functionality for ${tc.name}`, 'info')}
-                            sx={{ 
-                              color: '#dc2626', 
-                              backgroundColor: '#fee2e2', 
-                              width: 32, 
-                              height: 32,
-                              '&:hover': { backgroundColor: '#fecaca' } 
-                            }}
-                          >
-                            <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<i className="bi bi-upload"></i>}
-                          onClick={() => handleAssignClick(tc)}
-                          sx={{
-                            borderColor: '#9e1a1a',
-                            color: '#9e1a1a',
-                            fontWeight: 600,
-                            fontSize: '0.75rem',
-                            py: 0.5,
-                            px: 1.5,
-                            borderRadius: '6px',
-                            textTransform: 'none',
-                            '&:hover': {
-                              borderColor: '#7a1414',
-                              backgroundColor: '#fee2e2',
-                            }
-                          }}
-                        >
-                          Bulk Upload
-                        </Button>
-                      </Box>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => navigate(`/users/employee-detail/${tc.id}`)}
+                        sx={{
+                          backgroundColor: '#0343a8',
+                          color: '#ffffff',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          py: 0.5,
+                          px: 2,
+                          borderRadius: '6px',
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            backgroundColor: '#022d71',
+                            boxShadow: 'none',
+                          }
+                        }}
+                      >
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -959,8 +949,6 @@ export default function AssignClient() {
           </Button>
         </DialogActions>
       </Dialog>
-
-
     </Box>
   );
 }

@@ -2,27 +2,30 @@ import React, { useState, useMemo } from 'react';
 import {
   Box, Card, CardContent, Typography, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
-  Select, MenuItem, FormControl, InputLabel, TextField, InputAdornment, Autocomplete
+  Select, MenuItem, FormControl, InputLabel, TextField, InputAdornment, Autocomplete,
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton
 } from '@mui/material';
 
-import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusChip from '../../components/StatusChip/StatusChip';
-import { managers } from '../../data/managerData';
-import { telecallers } from '../../data/telecallerData';
-import { getInitials } from '../../utils/helpers';
+import { managers as initialUsers } from '../../data/managerData';
+import { telecallers, telecallerClients } from '../../data/telecallerData';
+import { getInitials, formatDate } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 
 export default function Reports() {
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
-  const [selectedManagerId, setSelectedManagerId] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
+
+  // Dialog state for viewing telecaller clients in-place
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTelecaller, setSelectedTelecaller] = useState(null);
 
   const assignedTelecallers = useMemo(() => {
-    if (!selectedManagerId) return [];
-    return telecallers.filter((tc) => tc.managerId === selectedManagerId);
-  }, [selectedManagerId]);
+    if (!selectedUserId) return [];
+    return telecallers.filter((tc) => tc.managerId === selectedUserId);
+  }, [selectedUserId]);
 
   const filteredTelecallers = useMemo(() => {
     return assignedTelecallers.filter((tc) => 
@@ -31,11 +34,16 @@ export default function Reports() {
     );
   }, [assignedTelecallers, search]);
 
+  const handleRowClick = (tc) => {
+    setSelectedTelecaller(tc);
+    setDialogOpen(true);
+  };
+
   return (
     <Box>
       <PageHeader
         title="Reports"
-        subtitle="View and export detailed performance reports by manager"
+        subtitle="View and export detailed performance reports by User"
         breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Reports' }]}
       />
 
@@ -45,20 +53,20 @@ export default function Reports() {
           <Box sx={{ mb: 4, maxWidth: 360 }}>
             <Autocomplete
               size="small"
-              value={managers.find((mgr) => mgr.id === selectedManagerId) || null}
+              value={initialUsers.find((u) => u.id === selectedUserId) || null}
               onChange={(event, newValue) => {
-                setSelectedManagerId(newValue ? newValue.id : '');
+                setSelectedUserId(newValue ? newValue.id : '');
                 setSearch('');
               }}
-              options={managers}
-              getOptionLabel={(option) => option.name}
-              renderInput={(params) => <TextField {...params} label="Select Manager" />}
+              options={initialUsers}
+              getOptionLabel={(option) => `${option.name} (${option.role})`}
+              renderInput={(params) => <TextField {...params} label="Select User" />}
               fullWidth
             />
           </Box>
 
           {/* Telecallers Table or Prompt */}
-          {selectedManagerId ? (
+          {selectedUserId ? (
             <Box>
               {assignedTelecallers.length > 0 ? (
                 <Box>
@@ -91,6 +99,7 @@ export default function Reports() {
                             <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Emp ID</TableCell>
                             <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
                             <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Assigned Clients</TableCell>
                             <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
                           </TableRow>
                         </TableHead>
@@ -99,7 +108,7 @@ export default function Reports() {
                             <TableRow 
                               key={tc.id} 
                               hover
-                              onClick={() => navigate(`/telecallers/${tc.id}/clients`)}
+                              onClick={() => handleRowClick(tc)}
                               sx={{ cursor: 'pointer' }}
                             >
                               <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
@@ -120,6 +129,11 @@ export default function Reports() {
                               </TableCell>
                               <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                                 <StatusChip status={tc.status} />
+                              </TableCell>
+                              <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                  {tc.totalClients || 0}
+                                </Typography>
                               </TableCell>
                               <TableCell align="center" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                                 <Button
@@ -158,7 +172,7 @@ export default function Reports() {
                 </Box>
               ) : (
                 <Typography color="text.secondary" sx={{ mt: 2 }}>
-                  No telecallers assigned to this manager.
+                  No telecallers assigned to this user.
                 </Typography>
               )}
             </Box>
@@ -166,12 +180,79 @@ export default function Reports() {
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <i className="bi bi-person-badge" style={{ fontSize: '3.5rem', color: '#cbd5e1' }}></i>
               <Typography color="text.secondary" sx={{ mt: 2, fontWeight: 500 }}>
-                Select a manager from the dropdown above to view their performance report and assigned telecallers.
+                Select a user from the dropdown above to view their performance report and assigned telecallers.
               </Typography>
             </Box>
           )}
         </CardContent>
       </Card>
+
+      {/* In-place Assigned Clients Dialog */}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)}
+        PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          background: 'linear-gradient(135deg, #022d71 0%, #0343a8 100%)', 
+          color: '#ffffff',
+          fontWeight: 700,
+          py: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            {selectedTelecaller ? `${selectedTelecaller.name}'s Assigned Clients` : 'Assigned Clients'}
+          </Typography>
+          <IconButton onClick={() => setDialogOpen(false)} sx={{ color: '#ffffff' }}>
+            <i className="bi bi-x-lg" style={{ fontSize: '1rem' }}></i>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3, pb: 3 }}>
+          {selectedTelecaller && (
+            <Box>
+              <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Client Name</TableCell>
+                      <TableCell align="center">Phone</TableCell>
+                      <TableCell align="center">Last Contact</TableCell>
+                      <TableCell align="center">Status</TableCell>
+                      <TableCell align="center">Duration</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {telecallerClients.map((client) => (
+                      <TableRow key={client.id} hover>
+                        <TableCell sx={{ fontWeight: 600 }}>{client.clientName}</TableCell>
+                        <TableCell align="center">{client.phone}</TableCell>
+                        <TableCell align="center">{formatDate(client.lastContact)}</TableCell>
+                        <TableCell align="center">
+                          <StatusChip status={client.callStatus} />
+                        </TableCell>
+                        <TableCell align="center">{client.callDuration}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #f1f5f9' }}>
+          <Button 
+            variant="contained" 
+            onClick={() => setDialogOpen(false)}
+            sx={{ background: '#0343a8', textTransform: 'none', borderRadius: 2, px: 3 }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

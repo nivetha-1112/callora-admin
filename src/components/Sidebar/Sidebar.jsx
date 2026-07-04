@@ -11,12 +11,11 @@ const SIDEBAR_WIDTH = 270;
 const menuItems = [
   { text: 'Dashboard', iconClass: 'bi bi-speedometer2', path: '/' },
   { text: 'Roles & Permission', iconClass: 'bi bi-shield-check', path: '/roles-permissions' },
-  { text: 'Manager', iconClass: 'bi bi-person-badge', path: '/managers' },
+  { text: 'Users', iconClass: 'bi bi-people', path: '/users' },
   { text: 'Assign client', iconClass: 'bi bi-person-plus', path: '/assign-client' },
-  { text: 'Telecaller', iconClass: 'bi bi-headset', path: '/telecallers' },
-  { text: 'Logout report', iconClass: 'bi bi-shield-lock', path: '/logout-report' },
+  { text: 'Team Target', iconClass: 'bi bi-crosshair', path: '/team-target' },
+  { text: 'Activities', iconClass: 'bi bi-activity', path: '/activities' },
   { text: 'Reports', iconClass: 'bi bi-bar-chart-line', path: '/reports' },
-  { text: 'Settings', iconClass: 'bi bi-gear', path: '/settings' },
 ];
 
 export default function Sidebar() {

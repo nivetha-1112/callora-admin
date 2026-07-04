@@ -3,14 +3,12 @@ import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import RolesPermissions from '../pages/RolesPermissions/RolesPermissions';
-import ManagerList from '../pages/Manager/ManagerList';
-import AssignClient from '../pages/Manager/AssignClient';
-import TelecallerList from '../pages/Telecaller/TelecallerList';
-import TelecallerClientList from '../pages/Telecaller/TelecallerClientList';
-import TelecallerClientDetails from '../pages/Telecaller/TelecallerClientDetails';
-import AuthMonitoring from '../pages/Authentication/AuthMonitoring';
+import UserList from '../pages/Users/UserList';
+import AssignClient from '../pages/Users/AssignClient';
+import EmployeeDetail from '../pages/Users/EmployeeDetail';
+import TeamTarget from '../pages/TeamTarget/TeamTarget';
+import Activities from '../pages/Activities/Activities';
 import Reports from '../pages/Reports/Reports';
-import Settings from '../pages/Settings/Settings';
 
 export default function AppRoutes() {
   return (
@@ -18,14 +16,12 @@ export default function AppRoutes() {
       <Route path="/" element={<DashboardLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="roles-permissions" element={<RolesPermissions />} />
-        <Route path="managers" element={<ManagerList />} />
+        <Route path="users" element={<UserList />} />
         <Route path="assign-client" element={<AssignClient />} />
-        <Route path="telecallers" element={<TelecallerList />} />
-        <Route path="telecallers/:id/clients" element={<TelecallerClientList />} />
-        <Route path="telecallers/:id/clients/:clientId" element={<TelecallerClientDetails />} />
-        <Route path="logout-report" element={<AuthMonitoring />} />
+        <Route path="users/employee-detail/:id" element={<EmployeeDetail />} />
+        <Route path="team-target" element={<TeamTarget />} />
+        <Route path="activities" element={<Activities />} />
         <Route path="reports" element={<Reports />} />
-        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );
