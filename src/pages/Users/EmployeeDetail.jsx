@@ -1,14 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, Button, Grid, Avatar, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow
+  TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle,
+  DialogContent, DialogActions, IconButton
 } from '@mui/material';
 
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusChip from '../../components/StatusChip/StatusChip';
 import { telecallers as teleData } from '../../data/telecallerData';
 import { getInitials, formatDate } from '../../utils/helpers';
+import { useToast } from '../../context/ToastContext';
+import { useAppContext } from '../../store/AppContext';
 
 const mockDatabasesMap = {
   'TC001': [
@@ -33,29 +36,117 @@ const mockDatabasesMap = {
 export default function EmployeeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { state: appState } = useAppContext();
 
-  const employee = useMemo(() => {
-    return teleData.find(tc => tc.id === id);
+  const currentUserName = appState?.user?.name || 'Arun Patel';
+
+  const [employeeData, setEmployeeData] = useState(null);
+  const [databasesList, setDatabasesList] = useState([]);
+  
+  // Dialog state
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [databaseName, setDatabaseName] = useState('');
+
+  useEffect(() => {
+    const found = teleData.find(tc => tc.id === id);
+    if (found) {
+      setEmployeeData(found);
+      const initial = mockDatabasesMap[found.id] || [
+        {
+          id: `DB_${found.id}_1`,
+          name: `Leads_Campaign_${found.id}.csv`,
+          assignDate: found.joinDate,
+          clientsCount: found.totalClients || 10,
+          createdBy: found.managerName || 'Arun Patel'
+        }
+      ];
+      setDatabasesList(initial);
+    } else {
+      setEmployeeData(null);
+      setDatabasesList([]);
+    }
   }, [id]);
 
-  const assignedDatabases = useMemo(() => {
-    if (!employee) return [];
-    if (mockDatabasesMap[employee.id]) {
-      return mockDatabasesMap[employee.id];
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setDatabaseName(file.name);
     }
-    // Dynamic fallback matching employee stats
-    return [
-      {
-        id: `DB_${employee.id}_1`,
-        name: `Leads_Campaign_${employee.id}.csv`,
-        assignDate: employee.joinDate,
-        clientsCount: employee.totalClients || 10,
-        createdBy: employee.managerName || 'Arun Patel'
-      }
-    ];
-  }, [employee]);
+  };
 
-  if (!employee) {
+  const downloadTemplate = () => {
+    const csvContent = "Name,mobile,email,company,lead source,location,current status,assign,date\nAlice Johnson,+91 99887 71122,alice@example.com,Acme Corp,Google Ads,Delhi,New Lead,Priya Sharma,2026-07-06\nBob Smith,+91 99887 71133,bob@example.com,Beta Inc,Facebook Lead,Mumbai,Follow Up,Priya Sharma,2026-07-06\n";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${employeeData?.name.replace(/\s+/g, '_')}_database_template.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleUploadSubmit = () => {
+    if (!selectedFile) {
+      showToast('Please choose a CSV file first', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
+      if (lines.length < 2) {
+        showToast('CSV file is empty or missing headers', 'error');
+        return;
+      }
+
+      // Parse headers
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const required = ['name', 'mobile', 'email', 'company', 'lead source', 'location', 'current status', 'assign', 'date'];
+      const missing = required.filter(col => !headers.includes(col));
+
+      if (missing.length > 0) {
+        showToast(`Invalid CSV headers. Missing columns: ${missing.join(', ')}`, 'error');
+        return;
+      }
+
+      const clientCount = lines.length - 1;
+
+      // Update local database list
+      const newDb = {
+        id: `DB_${Date.now()}`,
+        name: databaseName || selectedFile.name,
+        assignDate: new Date().toISOString().split('T')[0],
+        clientsCount: clientCount,
+        createdBy: currentUserName
+      };
+
+      setDatabasesList(prev => [newDb, ...prev]);
+
+      // Update employee stats
+      setEmployeeData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          totalClients: (prev.totalClients || 0) + clientCount,
+          totalCalls: (prev.totalCalls || 0) + clientCount
+        };
+      });
+
+      showToast(`Successfully assigned database and ${clientCount} clients to ${employeeData.name}!`, 'success');
+      setUploadOpen(false);
+      setSelectedFile(null);
+      setDatabaseName('');
+    };
+    reader.readAsText(selectedFile);
+  };
+
+  if (!employeeData) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="h5" color="error" sx={{ fontWeight: 700 }}>
@@ -70,17 +161,17 @@ export default function EmployeeDetail() {
 
   // Cards stats
   const stats = [
-    { title: 'Database Count', value: employee.totalCalls, icon: 'bi bi-database', color: '#0343a8', bg: '#eaf4ff' },
-    { title: 'Assigned Clients', value: employee.totalClients, icon: 'bi bi-people-fill', color: '#10b981', bg: '#ecfdf5' },
-    { title: 'Conversions', value: employee.converted, icon: 'bi bi-check-circle-fill', color: '#059669', bg: '#f0fdf4' },
-    { title: 'Follow-ups', value: employee.followUp, icon: 'bi bi-telephone-outbound-fill', color: '#f59e0b', bg: '#fef3c7' },
+    { title: 'Database Count', value: employeeData.totalCalls, icon: 'bi bi-database', color: '#0343a8', bg: '#eaf4ff' },
+    { title: 'Assigned Clients', value: employeeData.totalClients, icon: 'bi bi-people-fill', color: '#10b981', bg: '#ecfdf5' },
+    { title: 'Conversions', value: employeeData.converted, icon: 'bi bi-check-circle-fill', color: '#059669', bg: '#f0fdf4' },
+    { title: 'Follow-ups', value: employeeData.followUp, icon: 'bi bi-telephone-outbound-fill', color: '#f59e0b', bg: '#fef3c7' },
   ];
 
   return (
     <Box>
       <PageHeader
         title="Employee Detail"
-        subtitle={`Detailed assignment view for ${employee.name}`}
+        subtitle={`Detailed assignment view for ${employeeData.name}`}
         breadcrumbs={[
           { label: 'Home', path: '/' },
           { label: 'Assign Client', path: '/assign-client' },
@@ -124,23 +215,23 @@ export default function EmployeeDetail() {
                   border: '2.5px solid #0343a8'
                 }}
               >
-                {getInitials(employee.name)}
+                {getInitials(employeeData.name)}
               </Avatar>
             </Grid>
             <Grid item xs={12} sm sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 1 }}>
                 <Typography variant="h3" sx={{ fontWeight: 800 }}>
-                  {employee.name}
+                  {employeeData.name}
                 </Typography>
-                <StatusChip status={employee.status} />
+                <StatusChip status={employeeData.status} />
               </Box>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 1, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                <span><strong>Emp ID:</strong> {employee.id}</span>
-                <span><strong>Email:</strong> {employee.email}</span>
-                <span><strong>Mobile:</strong> {employee.mobile}</span>
+                <span><strong>Emp ID:</strong> {employeeData.id}</span>
+                <span><strong>Email:</strong> {employeeData.email}</span>
+                <span><strong>Mobile:</strong> {employeeData.mobile}</span>
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                <strong>Assigned User (Manager):</strong> {employee.managerName || 'None'} • <strong>Joined:</strong> {formatDate(employee.joinDate)}
+                <strong>Assigned User (Manager):</strong> {employeeData.managerName || 'None'} • <strong>Joined:</strong> {formatDate(employeeData.joinDate)}
               </Typography>
             </Grid>
           </Grid>
@@ -173,9 +264,29 @@ export default function EmployeeDetail() {
       {/* Assigned Databases Table */}
       <Card>
         <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
-            Assigned Databases
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              Assigned Databases
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setUploadOpen(true)}
+              startIcon={<i className="bi bi-cloud-arrow-up-fill"></i>}
+              sx={{
+                background: 'linear-gradient(135deg, #0343a8, #0454cc)',
+                color: '#ffffff',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 3,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #022d71, #0343a8)'
+                }
+              }}
+            >
+              DB Upload
+            </Button>
+          </Box>
           <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
             <Table size="small">
               <TableHead>
@@ -188,7 +299,7 @@ export default function EmployeeDetail() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {assignedDatabases.map((db, index) => (
+                {databasesList.map((db, index) => (
                   <TableRow key={db.id} hover>
                     <TableCell align="center" sx={{ fontWeight: 500, color: 'text.secondary' }}>
                       {index + 1}
@@ -212,6 +323,205 @@ export default function EmployeeDetail() {
           </TableContainer>
         </CardContent>
       </Card>
+
+      {/* CSV File Upload Modal (Redesigned) */}
+      <Dialog 
+        open={uploadOpen} 
+        onClose={() => { setUploadOpen(false); setSelectedFile(null); }} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, #022d71 0%, #0343a8 100%)',
+          color: '#ffffff',
+          py: 2
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Bulk Upload Databases</Typography>
+          <IconButton 
+            onClick={() => { setUploadOpen(false); setSelectedFile(null); }}
+            sx={{ color: '#ffffff' }}
+          >
+            <i className="bi bi-x-lg" style={{ fontSize: '1.1rem' }}></i>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, py: 3 }}>
+          <Box sx={{ 
+            mb: 3, 
+            p: 2.5, 
+            backgroundColor: '#f8fafc', 
+            borderRadius: 3, 
+            border: '1px solid #e2e8f0',
+            textAlign: 'center'
+          }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.5 }}>
+              Target Telecaller
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0343a8' }}>
+              {employeeData?.name}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+              <Avatar sx={{ width: 56, height: 56, backgroundColor: '#eaf4ff', color: '#0343a8' }}>
+                <i className="bi bi-cloud-arrow-up" style={{ fontSize: '1.8rem' }}></i>
+              </Avatar>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mb: 2, px: 2 }}>
+              Download the template, fill in your client data, and upload it back to the system.
+            </Typography>
+            <Box sx={{ p: 2, backgroundColor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', mb: 1, textAlign: 'left' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#475569', mb: 0.5 }}>
+                Database Field Names (CSV Columns):
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                <strong>Name</strong>, <strong>mobile</strong>, <strong>email</strong>, <strong>company</strong>, <strong>lead source</strong>, <strong>location</strong>, <strong>current status</strong>, <strong>assign</strong>, <strong>date</strong>
+              </Typography>
+            </Box>
+
+            {/* Step 1 */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              p: 2, 
+              backgroundColor: '#f8fafc', 
+              borderRadius: 2, 
+              border: '1px solid #e2e8f0',
+              mb: 1
+            }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1f2937' }}>
+                  Step 1: Download Template
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Get the standard Excel/CSV format.
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={downloadTemplate}
+                startIcon={<i className="bi bi-download"></i>}
+                sx={{ 
+                  borderColor: '#0343a8', 
+                  color: '#0343a8', 
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  '&:hover': { borderColor: '#022d71', backgroundColor: '#eaf4ff' } 
+                }}
+              >
+                Download
+              </Button>
+            </Box>
+
+            {/* Step 2 */}
+            <Box sx={{ 
+              p: 2, 
+              backgroundColor: '#f8fafc', 
+              borderRadius: 2, 
+              border: '1px solid #e2e8f0'
+            }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1f2937', mb: 1.5 }}>
+                Step 2: Upload File
+              </Typography>
+              <Box 
+                component="label"
+                sx={{ 
+                  width: '100%', 
+                  border: '2px dashed #3b82f6', 
+                  borderRadius: 2, 
+                  p: 3, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  cursor: 'pointer',
+                  backgroundColor: '#ffffff',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: '#0343a8',
+                    backgroundColor: '#f8fafc'
+                  }
+                }}
+              >
+                <input
+                  type="file"
+                  accept=".csv"
+                  hidden
+                  onChange={handleFileChange}
+                />
+                <i className="bi bi-cloud-upload-fill" style={{ fontSize: '1.8rem', color: '#3b82f6' }}></i>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#4b5563', textAlign: 'center' }}>
+                  Click to browse or drag & drop files here
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Supported formats: CSV, Excel
+                </Typography>
+                {selectedFile && (
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#10b981', mt: 0.5 }}>
+                    Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                  </Typography>
+                )}
+              </Box>
+
+              {selectedFile && (
+                <TextField
+                  fullWidth
+                  label="Database Name"
+                  size="small"
+                  value={databaseName}
+                  onChange={(e) => setDatabaseName(e.target.value)}
+                  sx={{ mt: 2, backgroundColor: '#ffffff' }}
+                />
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, justifyContent: 'center', gap: 2 }}>
+          <Button 
+            variant="outlined" 
+            onClick={() => { setUploadOpen(false); setSelectedFile(null); }} 
+            sx={{ 
+              borderColor: '#9ca3af', 
+              color: '#4b5563',
+              borderRadius: 2,
+              px: 3,
+              '&:hover': { borderColor: '#4b5563', backgroundColor: '#f3f4f6' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!selectedFile}
+            onClick={handleUploadSubmit}
+            startIcon={<i className="bi bi-check-circle-fill"></i>}
+            sx={{ 
+              background: 'linear-gradient(135deg, #0343a8, #0454cc)',
+              color: '#ffffff',
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              '&.Mui-disabled': {
+                background: '#e5e7eb',
+                color: '#9ca3af'
+              }
+            }}
+          >
+            Upload DB
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

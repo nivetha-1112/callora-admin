@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, Grid, Checkbox, FormControlLabel,
-  Tooltip
+  DialogContent, DialogActions, TextField, Grid, Tooltip
 } from '@mui/material';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import { useToast } from '../../context/ToastContext';
@@ -16,16 +15,7 @@ const initialRoles = [
   { id: 5, name: 'Viewer', permissions: 'View Only Access', users: 8, color: '#6b7280' },
 ];
 
-const availablePermissions = [
-  'Full Access',
-  'Manage Users',
-  'View Reports',
-  'Manage Telecallers',
-  'View Team Reports',
-  'Make Calls',
-  'View Own Data',
-  'View Only Access'
-];
+
 
 export default function RolesPermissions() {
   const { showToast } = useToast();
@@ -51,25 +41,17 @@ export default function RolesPermissions() {
     setOpen(true);
   };
 
-  const handlePermissionToggle = (perm) => {
-    if (selectedPermissions.includes(perm)) {
-      setSelectedPermissions(prev => prev.filter(p => p !== perm));
-    } else {
-      setSelectedPermissions(prev => [...prev, perm]);
-    }
-  };
+
 
   const handleSave = () => {
     if (!roleName) {
       showToast('Please enter a role name', 'warning');
       return;
     }
-    if (selectedPermissions.length === 0) {
-      showToast('Please select at least one permission', 'warning');
-      return;
-    }
 
-    const permissionsString = selectedPermissions.join(', ');
+    const permissionsString = selectedPermissions.length > 0 
+      ? selectedPermissions.join(', ') 
+      : 'View Only Access';
 
     if (editingRole) {
       setRoleList(prev => prev.map(r => r.id === editingRole.id ? { ...r, name: roleName, permissions: permissionsString } : r));
@@ -200,7 +182,7 @@ export default function RolesPermissions() {
           </Typography>
           <IconButton onClick={() => setOpen(false)}><i className="bi bi-x-lg" style={{ fontSize: '1.1rem' }}></i></IconButton>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ px: 3 }}>
           <Grid container spacing={2} sx={{ mt: 0 }}>
             <Grid size={12}>
               <TextField
@@ -210,31 +192,6 @@ export default function RolesPermissions() {
                 value={roleName}
                 onChange={(e) => setRoleName(e.target.value)}
               />
-            </Grid>
-            <Grid size={12}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}>
-                Permissions
-              </Typography>
-              <Grid container spacing={1}>
-                {availablePermissions.map((perm) => (
-                  <Grid size={6} key={perm}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedPermissions.includes(perm)}
-                          onChange={() => handlePermissionToggle(perm)}
-                          size="small"
-                          sx={{ 
-                            color: '#0343a8', 
-                            '&.Mui-checked': { color: '#0343a8' } 
-                          }}
-                        />
-                      }
-                      label={<Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>{perm}</Typography>}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
             </Grid>
           </Grid>
         </DialogContent>

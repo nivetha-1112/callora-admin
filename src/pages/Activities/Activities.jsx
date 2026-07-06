@@ -32,6 +32,10 @@ export default function Activities() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search);
 
+  // Date range filters
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
   // Pagination states
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -44,30 +48,51 @@ export default function Activities() {
 
   // Filtered Call Logs
   const filteredCalls = useMemo(() => {
-    return mockCallActivities.filter(item => 
-      item.clientName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      item.telecallerName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      item.outcome.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
-  }, [debouncedSearch]);
+    return mockCallActivities.filter(item => {
+      const matchSearch = item.clientName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          item.telecallerName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          item.outcome.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const matchFrom = !fromDate || item.date >= fromDate;
+      const matchTo = !toDate || item.date <= toDate;
+      return matchSearch && matchFrom && matchTo;
+    });
+  }, [debouncedSearch, fromDate, toDate]);
 
   // Filtered Logins
   const filteredLogins = useMemo(() => {
-    return loginHistory.filter(item => 
-      item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      item.employeeId.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      item.status.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      item.device.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
-  }, [debouncedSearch]);
+    return loginHistory.filter(item => {
+      const matchSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          item.employeeId.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          item.status.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          item.device.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const itemDate = item.loginTime.split('T')[0];
+      const matchFrom = !fromDate || itemDate >= fromDate;
+      const matchTo = !toDate || itemDate <= toDate;
+      return matchSearch && matchFrom && matchTo;
+    });
+  }, [debouncedSearch, fromDate, toDate]);
 
   // Filtered Audits
   const filteredAudits = useMemo(() => {
-    return activityTimeline.filter(item => 
-      item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      item.action.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
-  }, [debouncedSearch]);
+    return activityTimeline.filter(item => {
+      const matchSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          item.action.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const itemDate = item.time.split('T')[0];
+      const matchFrom = !fromDate || itemDate >= fromDate;
+      const matchTo = !toDate || itemDate <= toDate;
+      return matchSearch && matchFrom && matchTo;
+    });
+  }, [debouncedSearch, fromDate, toDate]);
+
+  // Filtered Security Alerts
+  const filteredAlerts = useMemo(() => {
+    return securityAlerts.filter(item => {
+      const itemDate = item.time.split('T')[0];
+      const matchFrom = !fromDate || itemDate >= fromDate;
+      const matchTo = !toDate || itemDate <= toDate;
+      return matchFrom && matchTo;
+    });
+  }, [fromDate, toDate]);
 
   return (
     <Box>
@@ -124,6 +149,44 @@ export default function Activities() {
                 }
               }}
             />
+            <TextField
+              type="date"
+              label="From Date"
+              size="small"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(0);
+              }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 160 }}
+            />
+            <TextField
+              type="date"
+              label="To Date"
+              size="small"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(0);
+              }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 160 }}
+            />
+            {(fromDate || toDate) && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setFromDate('');
+                  setToDate('');
+                  setPage(0);
+                }}
+                sx={{ color: '#ef4444', textTransform: 'none', fontWeight: 600 }}
+              >
+                Clear Dates
+              </Button>
+            )}
             <Box sx={{ flex: 1 }} />
             <ExportMenu onExport={(f) => showToast(`Exporting activities as ${f}...`, 'info')} />
           </Box>
@@ -246,7 +309,7 @@ export default function Activities() {
                   Security Alerts
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {securityAlerts.map(alert => (
+                  {filteredAlerts.map(alert => (
                     <Box 
                       key={alert.id} 
                       sx={{ 

@@ -13,6 +13,7 @@ import {
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusChip from '../../components/StatusChip/StatusChip';
 import { managers as initialUsers } from '../../data/managerData';
+import { telecallers as initialTelecallers } from '../../data/telecallerData';
 import { getInitials } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 
@@ -29,6 +30,18 @@ const targetHistoryData = [
 export default function TeamTarget() {
   const { showToast } = useToast();
   const [usersList] = useState(initialUsers);
+  const [telecallersList] = useState(initialTelecallers);
+  
+  // Team Creation states
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [teamFormData, setTeamFormData] = useState({
+    teamName: '',
+    managerId: '',
+    memberIds: [],
+    targetCalls: '',
+    targetConvs: '',
+    period: 'July 2026'
+  });
   
   // Targets list state (pre-populating some targets for mockup)
   const [targets, setTargets] = useState([
@@ -50,16 +63,39 @@ export default function TeamTarget() {
     period: 'July 2026'
   });
 
+  // Date filters state
+  const [fromDate, setFromDate] = useState('2026-07-01');
+  const [toDate, setToDate] = useState('2026-07-31');
+
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const filteredTargets = useMemo(() => {
+    return targets.filter(tgt => {
+      // Map period to start/end dates for filtering
+      let tgtStart = '2026-07-01';
+      let tgtEnd = '2026-07-31';
+      if (tgt.period === 'August 2026') {
+        tgtStart = '2026-08-01';
+        tgtEnd = '2026-08-31';
+      } else if (tgt.period === 'September 2026') {
+        tgtStart = '2026-09-01';
+        tgtEnd = '2026-09-30';
+      }
+
+      if (fromDate && tgtEnd < fromDate) return false;
+      if (toDate && tgtStart > toDate) return false;
+      return true;
+    });
+  }, [targets, fromDate, toDate]);
+
   // Stats
   const stats = useMemo(() => {
-    const totalCallsTarget = targets.reduce((acc, curr) => acc + Number(curr.targetCalls), 0);
-    const totalCallsAchieved = targets.reduce((acc, curr) => acc + Number(curr.achievedCalls), 0);
-    const totalConvsTarget = targets.reduce((acc, curr) => acc + Number(curr.targetConvs), 0);
-    const totalConvsAchieved = targets.reduce((acc, curr) => acc + Number(curr.achievedConvs), 0);
+    const totalCallsTarget = filteredTargets.reduce((acc, curr) => acc + Number(curr.targetCalls), 0);
+    const totalCallsAchieved = filteredTargets.reduce((acc, curr) => acc + Number(curr.achievedCalls), 0);
+    const totalConvsTarget = filteredTargets.reduce((acc, curr) => acc + Number(curr.targetConvs), 0);
+    const totalConvsAchieved = filteredTargets.reduce((acc, curr) => acc + Number(curr.achievedConvs), 0);
 
     const callRate = totalCallsTarget ? Math.round((totalCallsAchieved / totalCallsTarget) * 100) : 0;
     const convRate = totalConvsTarget ? Math.round((totalConvsAchieved / totalConvsTarget) * 100) : 0;
@@ -72,7 +108,7 @@ export default function TeamTarget() {
       convAchieved: totalConvsAchieved,
       convAchievementRate: convRate
     };
-  }, [targets]);
+  }, [filteredTargets]);
 
   const handleAddClick = () => {
     setFormData({
@@ -140,8 +176,44 @@ export default function TeamTarget() {
     setOpen(false);
   };
 
+  const handleCreateTeamClick = () => {
+    setTeamFormData({
+      teamName: '',
+      managerId: '',
+      memberIds: [],
+      targetCalls: '',
+      targetConvs: '',
+      period: 'July 2026'
+    });
+    setTeamOpen(true);
+  };
+
+  const handleCreateTeamSubmit = () => {
+    if (!teamFormData.teamName || !teamFormData.managerId || teamFormData.memberIds.length === 0) {
+      showToast('Please fill in all team fields and select at least one member', 'warning');
+      return;
+    }
+    const manager = usersList.find(u => u.id === teamFormData.managerId);
+    
+    const newTarget = {
+      id: `TGT${String(targets.length + 1).padStart(3, '0')}`,
+      userId: teamFormData.managerId,
+      name: `${teamFormData.teamName} (${manager ? manager.name : 'Unknown'})`,
+      role: 'Team',
+      targetCalls: Number(teamFormData.targetCalls) || 15000,
+      achievedCalls: 0,
+      targetConvs: Number(teamFormData.targetConvs) || 400,
+      achievedConvs: 0,
+      period: teamFormData.period
+    };
+    
+    setTargets(prev => [...prev, newTarget]);
+    showToast(`Team "${teamFormData.teamName}" created successfully with ${teamFormData.memberIds.length} members!`, 'success');
+    setTeamOpen(false);
+  };
+
   const chartData = useMemo(() => {
-    return targets.map(t => {
+    return filteredTargets.map(t => {
       const completionRate = t.targetCalls ? Math.round((t.achievedCalls / t.targetCalls) * 100) : 0;
       return {
         name: t.name,
@@ -150,7 +222,7 @@ export default function TeamTarget() {
         rate: completionRate
       };
     });
-  }, [targets]);
+  }, [filteredTargets]);
 
   return (
     <Box>
@@ -159,16 +231,90 @@ export default function TeamTarget() {
         subtitle="Set calling targets and track team completion metrics"
         breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Team Target' }]}
         actions={
-          <Button 
-            variant="contained" 
-            startIcon={<i className="bi bi-plus-lg"></i>} 
-            onClick={handleAddClick}
-            sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 3 }}
-          >
-            Assign Target
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              variant="outlined" 
+              startIcon={<i className="bi bi-people-fill"></i>} 
+              onClick={handleCreateTeamClick}
+              sx={{ 
+                borderColor: '#cbd5e1', 
+                color: '#64748b', 
+                fontWeight: 600, 
+                textTransform: 'none', 
+                borderRadius: '8px',
+                px: 2.5,
+                '&:hover': { 
+                  borderColor: '#94a3b8', 
+                  backgroundColor: '#f1f5f9' 
+                } 
+              }}
+            >
+              Create Team
+            </Button>
+            <Button 
+              variant="contained" 
+              startIcon={<i className="bi bi-plus-lg"></i>} 
+              onClick={handleAddClick}
+              sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', px: 3 }}
+            >
+              Assign Target
+            </Button>
+          </Box>
         }
       />
+
+      {/* Date Range Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+          <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap', alignItems: 'center' }}>
+            <TextField
+              type="date"
+              label="From Date"
+              size="small"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(0);
+              }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 180 }}
+            />
+            <TextField
+              type="date"
+              label="To Date"
+              size="small"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(0);
+              }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 180 }}
+            />
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                setFromDate('');
+                setToDate('');
+              }}
+              sx={{ 
+                borderColor: '#cbd5e1', 
+                color: '#64748b', 
+                textTransform: 'none', 
+                height: 40,
+                borderRadius: '6px',
+                '&:hover': {
+                  borderColor: '#94a3b8',
+                  backgroundColor: '#f1f5f9'
+                }
+              }}
+            >
+              Clear Filter
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Target Stats Cards */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
@@ -301,7 +447,7 @@ export default function TeamTarget() {
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Individual Progress</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Call target completion percentages</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                {targets.map((tgt) => {
+                {filteredTargets.map((tgt) => {
                   const rate = tgt.targetCalls ? Math.round((tgt.achievedCalls / tgt.targetCalls) * 100) : 0;
                   const isSuccess = rate >= 90;
                   const isWarning = rate < 80;
@@ -354,7 +500,7 @@ export default function TeamTarget() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {targets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tgt) => {
+              {filteredTargets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tgt) => {
                 const completionRate = tgt.targetCalls ? Math.round((tgt.achievedCalls / tgt.targetCalls) * 100) : 0;
                 let statusLabel = 'On Track';
                 let statusColor = '#0343a8';
@@ -431,7 +577,7 @@ export default function TeamTarget() {
         <TablePagination
           rowsPerPageOptions={[5, 10]}
           component="div"
-          count={targets.length}
+          count={filteredTargets.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={(e, p) => setPage(p)}
@@ -463,7 +609,7 @@ export default function TeamTarget() {
             <i className="bi bi-x-lg" style={{ fontSize: '1rem' }}></i>
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ pt: 3, pb: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <DialogContent sx={{ px: 3, py: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {/* User selector */}
           <FormControl fullWidth size="small" disabled={isEdit}>
             <InputLabel id="select-user-label">Select User</InputLabel>
@@ -548,6 +694,136 @@ export default function TeamTarget() {
             sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', textTransform: 'none', borderRadius: 2, px: 3 }}
           >
             Save Target
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Team Creation Modal */}
+      <Dialog 
+        open={teamOpen} 
+        onClose={() => setTeamOpen(false)}
+        PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          background: 'linear-gradient(135deg, #022d71 0%, #0343a8 100%)', 
+          color: '#ffffff',
+          fontWeight: 700,
+          py: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Create New Team
+          </Typography>
+          <IconButton onClick={() => setTeamOpen(false)} sx={{ color: '#ffffff' }}>
+            <i className="bi bi-x-lg" style={{ fontSize: '1rem' }}></i>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, py: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Team Name */}
+          <TextField
+            label="Team Name"
+            size="small"
+            placeholder="e.g. Sales Alpha"
+            value={teamFormData.teamName}
+            onChange={(e) => setTeamFormData({ ...teamFormData, teamName: e.target.value })}
+            fullWidth
+          />
+
+          {/* Select Manager */}
+          <FormControl fullWidth size="small">
+            <InputLabel id="select-team-manager-label">Select Manager</InputLabel>
+            <Select
+              labelId="select-team-manager-label"
+              value={teamFormData.managerId}
+              label="Select Manager"
+              onChange={(e) => setTeamFormData({ ...teamFormData, managerId: e.target.value })}
+            >
+              {usersList.map(u => (
+                <MenuItem key={u.id} value={u.id}>{u.name} ({u.role})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Select Team Members (Multi-select) */}
+          <Autocomplete
+            multiple
+            size="small"
+            options={telecallersList}
+            getOptionLabel={(option) => option.name}
+            value={telecallersList.filter(t => teamFormData.memberIds.includes(t.id))}
+            onChange={(event, newValue) => {
+              setTeamFormData({ ...teamFormData, memberIds: newValue.map(item => item.id) });
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="Select Team Members" placeholder="Add members..." />
+            )}
+            renderTags={(tagValue, getTagProps) =>
+              tagValue.map((option, index) => (
+                <Chip
+                  label={option.name}
+                  size="small"
+                  {...getTagProps({ index })}
+                  sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', fontWeight: 600 }}
+                />
+              ))
+            }
+          />
+
+          {/* Target Period */}
+          <FormControl fullWidth size="small">
+            <InputLabel id="team-period-label">Period</InputLabel>
+            <Select
+              labelId="team-period-label"
+              value={teamFormData.period}
+              label="Period"
+              onChange={(e) => setTeamFormData({ ...teamFormData, period: e.target.value })}
+            >
+              <MenuItem value="July 2026">July 2026</MenuItem>
+              <MenuItem value="August 2026">August 2026</MenuItem>
+              <MenuItem value="September 2026">September 2026</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Target Calls */}
+          <TextField
+            label="Call Target"
+            size="small"
+            type="number"
+            placeholder="e.g. 15000"
+            value={teamFormData.targetCalls}
+            onChange={(e) => setTeamFormData({ ...teamFormData, targetCalls: e.target.value })}
+            fullWidth
+          />
+
+          {/* Target Conversions */}
+          <TextField
+            label="Conversion Target"
+            size="small"
+            type="number"
+            placeholder="e.g. 450"
+            value={teamFormData.targetConvs}
+            onChange={(e) => setTeamFormData({ ...teamFormData, targetConvs: e.target.value })}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, gap: 1.5, borderTop: '1px solid #f1f5f9' }}>
+          <Button 
+            variant="outlined" 
+            onClick={() => setTeamOpen(false)}
+            sx={{ borderColor: '#cbd5e1', color: '#64748b', textTransform: 'none', borderRadius: 2, px: 3 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCreateTeamSubmit}
+            sx={{ background: 'linear-gradient(135deg, #0343a8, #0454cc)', textTransform: 'none', borderRadius: 2, px: 3 }}
+          >
+            Create Team
           </Button>
         </DialogActions>
       </Dialog>

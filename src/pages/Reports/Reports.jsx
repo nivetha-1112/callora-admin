@@ -22,6 +22,10 @@ export default function Reports() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTelecaller, setSelectedTelecaller] = useState(null);
 
+  // Date filters state
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
   const assignedTelecallers = useMemo(() => {
     if (!selectedUserId) return [];
     return telecallers.filter((tc) => tc.managerId === selectedUserId);
@@ -39,6 +43,14 @@ export default function Reports() {
     setDialogOpen(true);
   };
 
+  const filteredClients = useMemo(() => {
+    return telecallerClients.filter((client) => {
+      const matchFrom = !fromDate || client.lastContact >= fromDate;
+      const matchTo = !toDate || client.lastContact <= toDate;
+      return matchFrom && matchTo;
+    });
+  }, [fromDate, toDate]);
+
   return (
     <Box>
       <PageHeader
@@ -49,8 +61,8 @@ export default function Reports() {
 
       <Card>
         <CardContent sx={{ p: 4 }}>
-          {/* Dropdown Box */}
-          <Box sx={{ mb: 4, maxWidth: 360 }}>
+          {/* Dropdown & Date Filters */}
+          <Box sx={{ mb: 4, display: 'flex', gap: 2.5, flexWrap: 'wrap', alignItems: 'center' }}>
             <Autocomplete
               size="small"
               value={initialUsers.find((u) => u.id === selectedUserId) || null}
@@ -61,8 +73,39 @@ export default function Reports() {
               options={initialUsers}
               getOptionLabel={(option) => `${option.name} (${option.role})`}
               renderInput={(params) => <TextField {...params} label="Select User" />}
-              fullWidth
+              sx={{ minWidth: 260, maxWidth: 360, flex: 1 }}
             />
+            <TextField
+              type="date"
+              label="From Date"
+              size="small"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 180 }}
+            />
+            <TextField
+              type="date"
+              label="To Date"
+              size="small"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 180 }}
+            />
+            {(fromDate || toDate) && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setFromDate('');
+                  setToDate('');
+                }}
+                sx={{ color: '#ef4444', textTransform: 'none', fontWeight: 600 }}
+              >
+                Clear Dates
+              </Button>
+            )}
           </Box>
 
           {/* Telecallers Table or Prompt */}
@@ -211,7 +254,7 @@ export default function Reports() {
             <i className="bi bi-x-lg" style={{ fontSize: '1rem' }}></i>
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ pt: 3, pb: 3 }}>
+        <DialogContent sx={{ px: 3, py: 3 }}>
           {selectedTelecaller && (
             <Box>
               <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
@@ -226,7 +269,7 @@ export default function Reports() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {telecallerClients.map((client) => (
+                    {filteredClients.map((client) => (
                       <TableRow key={client.id} hover>
                         <TableCell sx={{ fontWeight: 600 }}>{client.clientName}</TableCell>
                         <TableCell align="center">{client.phone}</TableCell>

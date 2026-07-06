@@ -261,34 +261,6 @@ export default function AssignClient() {
                 }
               }}
             />
-            <Box sx={{ flex: 1 }} />
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<i className="bi bi-upload"></i>}
-              onClick={() => {
-                if (filteredTelecallers.length > 0) {
-                  handleAssignClick(filteredTelecallers[0]);
-                } else {
-                  showToast('No employees found to assign databases to.', 'warning');
-                }
-              }}
-              sx={{
-                background: 'linear-gradient(135deg, #0343a8, #0454cc)',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: '8px',
-                px: 2.5,
-                py: 1,
-                boxShadow: 'none',
-                '&:hover': {
-                  background: '#022d71',
-                  boxShadow: 'none'
-                }
-              }}
-            >
-              Bulk Upload
-            </Button>
           </Box>
         </CardContent>
       </Card>
