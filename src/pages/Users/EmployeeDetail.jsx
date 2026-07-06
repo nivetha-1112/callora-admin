@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, Button, Grid, Avatar, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle,
-  DialogContent, DialogActions, IconButton
+  DialogContent, DialogActions, IconButton, TextField, InputAdornment, Tooltip
 } from '@mui/material';
 
 import PageHeader from '../../components/PageHeader/PageHeader';
@@ -12,6 +12,48 @@ import { telecallers as teleData } from '../../data/telecallerData';
 import { getInitials, formatDate } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 import { useAppContext } from '../../store/AppContext';
+
+const generateMockClients = (dbId, count, telecallerName) => {
+  const names = [
+    'Rajesh Kumar', 'Sita Devi', 'Vikram Singh', 'Aarti Sharma', 'Sanjay Patel', 
+    'Pooja Gupta', 'Anil Mehta', 'Kiran Reddy', 'Sunil Verma', 'Deepa Nair',
+    'Ramesh Rao', 'Geeta Joshi', 'Vijay Iyer', 'Kavita Deshmukh', 'Manoj Saxena',
+    'Neha Pandey', 'Rakesh Tiwari', 'Divya Menon', 'Suresh Pillai', 'Jyoti Mishra',
+    'Alok Yadav', 'Harish Rawat', 'Preeti Bhatia', 'Ajay Gill', 'Seema Kapoor',
+    'Nitin Chaudhury', 'Rekha Sen', 'Abhishek Das', 'Monica Roy', 'Sandeep Bose'
+  ];
+  const locations = ['Delhi', 'Noida', 'Gurgaon', 'Faridabad', 'Ghaziabad'];
+  const statuses = ['New Lead', 'Follow Up', 'Interested', 'Not Interested', 'Converted'];
+  const sources = ['Google Ads', 'Facebook Lead', 'Reference', 'Cold Call', 'Website Inquiry'];
+  
+  const clients = [];
+  for (let i = 0; i < count; i++) {
+    const name = names[i % names.length] + (i >= names.length ? ` ${Math.floor(i / names.length) + 1}` : '');
+    // Ensure we have a semi-unique seed for phone number based on dbId
+    const seed = parseInt(String(dbId).replace(/\D/g, '') || '0') || 100;
+    const mobile = `+91 99887 ${String(71000 + i + (seed % 1000)).padStart(5, '0')}`;
+    const email = `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+    const company = `${name.split(' ')[0]} Ventures`;
+    const location = locations[i % locations.length];
+    const status = statuses[i % statuses.length];
+    const source = sources[i % sources.length];
+    const date = new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+    
+    clients.push({
+      name,
+      mobile,
+      email,
+      company,
+      leadSource: source,
+      location,
+      status,
+      assign: telecallerName || 'Priya Sharma',
+      date,
+      duration: `${Math.floor(Math.random() * 3) + 1}m ${String(Math.floor(Math.random() * 60)).padStart(2, '0')}s`
+    });
+  }
+  return clients;
+};
 
 const mockDatabasesMap = {
   'TC001': [
@@ -49,6 +91,11 @@ export default function EmployeeDetail() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [databaseName, setDatabaseName] = useState('');
 
+  // View clients dialog state
+  const [viewingDb, setViewingDb] = useState(null);
+  const [clientSearch, setClientSearch] = useState('');
+  const [playingClientId, setPlayingClientId] = useState(null);
+
   useEffect(() => {
     const found = teleData.find(tc => tc.id === id);
     if (found) {
@@ -62,7 +109,11 @@ export default function EmployeeDetail() {
           createdBy: found.managerName || 'Arun Patel'
         }
       ];
-      setDatabasesList(initial);
+      const initialWithClients = initial.map(db => ({
+        ...db,
+        clients: db.clients || generateMockClients(db.id, db.clientsCount, found.name)
+      }));
+      setDatabasesList(initialWithClients);
     } else {
       setEmployeeData(null);
       setDatabasesList([]);
@@ -95,6 +146,10 @@ export default function EmployeeDetail() {
       showToast('Please choose a CSV file first', 'warning');
       return;
     }
+    if (!databaseName.trim()) {
+      showToast('Please enter a database name', 'warning');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -115,15 +170,42 @@ export default function EmployeeDetail() {
         return;
       }
 
-      const clientCount = lines.length - 1;
+      // Map headers to indices
+      const headerIndices = {};
+      required.forEach(col => {
+        headerIndices[col] = headers.indexOf(col);
+      });
+
+      // Parse clients
+      const clients = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(cell => cell.trim());
+        if (row.length < headers.length) continue;
+        
+        clients.push({
+          name: row[headerIndices['name']] || '',
+          mobile: row[headerIndices['mobile']] || '',
+          email: row[headerIndices['email']] || '',
+          company: row[headerIndices['company']] || '',
+          leadSource: row[headerIndices['lead source']] || '',
+          location: row[headerIndices['location']] || '',
+          status: row[headerIndices['current status']] || '',
+          assign: row[headerIndices['assign']] || '',
+          date: row[headerIndices['date']] || '',
+          duration: `${Math.floor(Math.random() * 3) + 1}m ${String(Math.floor(Math.random() * 60)).padStart(2, '0')}s`
+        });
+      }
+
+      const clientCount = clients.length;
 
       // Update local database list
       const newDb = {
         id: `DB_${Date.now()}`,
-        name: databaseName || selectedFile.name,
+        name: databaseName.trim(),
         assignDate: new Date().toISOString().split('T')[0],
         clientsCount: clientCount,
-        createdBy: currentUserName
+        createdBy: currentUserName,
+        clients: clients
       };
 
       setDatabasesList(prev => [newDb, ...prev]);
@@ -261,68 +343,243 @@ export default function EmployeeDetail() {
         ))}
       </Grid>
 
-      {/* Assigned Databases Table */}
-      <Card>
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Assigned Databases
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => setUploadOpen(true)}
-              startIcon={<i className="bi bi-cloud-arrow-up-fill"></i>}
-              sx={{
-                background: 'linear-gradient(135deg, #0343a8, #0454cc)',
-                color: '#ffffff',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: '8px',
-                px: 3,
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #022d71, #0343a8)'
-                }
-              }}
-            >
-              DB Upload
-            </Button>
-          </Box>
-          <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="center" sx={{ fontWeight: 'bold', width: '80px' }}>S.NO</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Database Name</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>Assign Data</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>Clients</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Created By</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {databasesList.map((db, index) => (
-                  <TableRow key={db.id} hover>
-                    <TableCell align="center" sx={{ fontWeight: 500, color: 'text.secondary' }}>
-                      {index + 1}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: '#0343a8' }}>
-                      {db.name}
-                    </TableCell>
-                    <TableCell align="center">
-                      {formatDate(db.assignDate)}
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700 }}>
-                      {db.clientsCount}
-                    </TableCell>
-                    <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                      {db.createdBy}
-                    </TableCell>
+      {/* Assigned Databases Table OR Clients Page Style */}
+      {!viewingDb ? (
+        <Card>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                Assigned Databases
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => setUploadOpen(true)}
+                startIcon={<i className="bi bi-cloud-arrow-up-fill"></i>}
+                sx={{
+                  background: 'linear-gradient(135deg, #0343a8, #0454cc)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  px: 3,
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #022d71, #0343a8)'
+                  }
+                }}
+              >
+                DB Upload
+              </Button>
+            </Box>
+            <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', width: '80px' }}>S.NO</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Database Name</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Assign Data</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Clients</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Created By</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+                </TableHead>
+                <TableBody>
+                  {databasesList.map((db, index) => (
+                    <TableRow key={db.id} hover>
+                      <TableCell align="center" sx={{ fontWeight: 500, color: 'text.secondary' }}>
+                        {index + 1}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        <Tooltip title="Click to view database clients" arrow>
+                          <span
+                            style={{
+                              color: '#0343a8',
+                              cursor: 'pointer',
+                              textDecoration: 'none'
+                            }}
+                            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                            onClick={() => setViewingDb(db)}
+                          >
+                            {db.name}
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="center">
+                        {formatDate(db.assignDate)}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>
+                        <Tooltip title="Click to view database clients" arrow>
+                          <span
+                            style={{
+                              color: '#0343a8',
+                              cursor: 'pointer',
+                              textDecoration: 'none'
+                            }}
+                            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                            onClick={() => setViewingDb(db)}
+                          >
+                            {db.clientsCount}
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                        {db.createdBy}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent sx={{ p: 4 }}>
+            {/* Header with Back Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <IconButton 
+                  onClick={() => { setViewingDb(null); setClientSearch(''); setPlayingClientId(null); }}
+                  sx={{ 
+                    color: '#0343a8', 
+                    border: '1.5px solid #0343a8', 
+                    borderRadius: '8px',
+                    width: '36px',
+                    height: '36px',
+                    '&:hover': {
+                      backgroundColor: '#eaf4ff'
+                    }
+                  }}
+                >
+                  <i className="bi bi-arrow-left" style={{ fontSize: '1rem' }}></i>
+                </IconButton>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                    Database: {viewingDb.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Total Clients: {viewingDb.clientsCount} • Created By: {viewingDb.createdBy}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Search Bar inside header */}
+              <TextField
+                size="small"
+                placeholder="Search clients..."
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+                sx={{ 
+                  width: { xs: '100%', sm: '300px' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px'
+                  }
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <i className="bi bi-search" style={{ color: '#64748b' }}></i>
+                      </InputAdornment>
+                    ),
+                  }
+                }}
+              />
+            </Box>
+
+            {/* Clients Table (Page Style) */}
+            <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>S.No</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Client Name</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Phone Number</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Company</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Lead Source</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Location</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Status</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc', width: '130px' }}>Recorder</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {viewingDb.clients && viewingDb.clients
+                    .filter(c => 
+                      c.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
+                      c.mobile.includes(clientSearch) ||
+                      c.email.toLowerCase().includes(clientSearch.toLowerCase())
+                    )
+                    .map((client, idx) => (
+                      <TableRow key={idx} hover>
+                        <TableCell align="center" sx={{ color: 'text.secondary' }}>{idx + 1}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{client.name}</TableCell>
+                        <TableCell>{client.mobile}</TableCell>
+                        <TableCell>{client.email}</TableCell>
+                        <TableCell>{client.company}</TableCell>
+                        <TableCell>{client.leadSource}</TableCell>
+                        <TableCell>{client.location}</TableCell>
+                        <TableCell align="center">
+                          <StatusChip status={client.status} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => {
+                                if (playingClientId === client.mobile) {
+                                  setPlayingClientId(null);
+                                } else {
+                                  setPlayingClientId(client.mobile);
+                                }
+                              }}
+                              sx={{ 
+                                color: playingClientId === client.mobile ? '#ef4444' : '#0343a8',
+                                backgroundColor: playingClientId === client.mobile ? '#fee2e2' : '#eaf4ff',
+                                padding: '4px',
+                                '&:hover': {
+                                  backgroundColor: playingClientId === client.mobile ? '#fecaca' : '#d0e8ff',
+                                }
+                              }}
+                            >
+                              {playingClientId === client.mobile ? (
+                                <i className="bi bi-pause-fill" style={{ fontSize: '1rem' }}></i>
+                              ) : (
+                                <i className="bi bi-play-fill" style={{ fontSize: '1rem' }}></i>
+                              )}
+                            </IconButton>
+                            <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'text.secondary', minWidth: '45px', textAlign: 'left' }}>
+                              {playingClientId === client.mobile ? (
+                                <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                  Playing <i className="bi bi-soundwave" style={{ fontSize: '0.85rem' }}></i>
+                                </span>
+                              ) : (
+                                client.duration || '1m 24s'
+                              )}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">{formatDate(client.date)}</TableCell>
+                      </TableRow>
+                    ))}
+                  {(!viewingDb.clients || viewingDb.clients.filter(c => 
+                      c.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
+                      c.mobile.includes(clientSearch) ||
+                      c.email.toLowerCase().includes(clientSearch.toLowerCase())
+                    ).length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                        No clients found in this database.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* CSV File Upload Modal (Redesigned) */}
       <Dialog 
@@ -434,6 +691,16 @@ export default function EmployeeDetail() {
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1f2937', mb: 1.5 }}>
                 Step 2: Upload File
               </Typography>
+
+              <TextField
+                fullWidth
+                label="Database Name"
+                size="small"
+                value={databaseName}
+                onChange={(e) => setDatabaseName(e.target.value)}
+                sx={{ mb: 2, backgroundColor: '#ffffff' }}
+              />
+
               <Box 
                 component="label"
                 sx={{ 
@@ -473,17 +740,6 @@ export default function EmployeeDetail() {
                   </Typography>
                 )}
               </Box>
-
-              {selectedFile && (
-                <TextField
-                  fullWidth
-                  label="Database Name"
-                  size="small"
-                  value={databaseName}
-                  onChange={(e) => setDatabaseName(e.target.value)}
-                  sx={{ mt: 2, backgroundColor: '#ffffff' }}
-                />
-              )}
             </Box>
           </Box>
         </DialogContent>
