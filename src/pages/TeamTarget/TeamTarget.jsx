@@ -1,31 +1,16 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, TextField, MenuItem, Select, FormControl,
   InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TablePagination, Avatar, IconButton, Tooltip, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, Grid, LinearProgress, InputAdornment, Autocomplete
 } from '@mui/material';
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip as ReTooltip, ResponsiveContainer, Legend
-} from 'recharts';
 
 import PageHeader from '../../components/PageHeader/PageHeader';
-import StatusChip from '../../components/StatusChip/StatusChip';
 import { managers as initialUsers } from '../../data/managerData';
 import { telecallers as initialTelecallers } from '../../data/telecallerData';
 import { getInitials } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
-
-// Mock monthly historical target data
-const targetHistoryData = [
-  { month: 'Jan', targetCalls: 4000, actualCalls: 3800, targetConvs: 120, actualConvs: 110 },
-  { month: 'Feb', targetCalls: 4000, actualCalls: 4200, targetConvs: 120, actualConvs: 130 },
-  { month: 'Mar', targetCalls: 4500, actualCalls: 4400, targetConvs: 140, actualConvs: 135 },
-  { month: 'Apr', targetCalls: 4500, actualCalls: 4600, targetConvs: 140, actualConvs: 142 },
-  { month: 'May', targetCalls: 5000, actualCalls: 4800, targetConvs: 160, actualConvs: 150 },
-  { month: 'Jun', targetCalls: 5000, actualCalls: 5120, targetConvs: 160, actualConvs: 165 },
-];
 
 export default function TeamTarget() {
   const { showToast } = useToast();
@@ -43,13 +28,13 @@ export default function TeamTarget() {
     period: 'July 2026'
   });
   
-  // Targets list state (pre-populating some targets for mockup)
+  // Targets list state formatted with Group Name, Manager Count, Telecaller Count, Client Amount
   const [targets, setTargets] = useState([
-    { id: 'TGT001', userId: 'MGR001', name: 'Arun Patel', role: 'Manager', targetCalls: 16000, achievedCalls: 15240, targetConvs: 500, achievedConvs: 480, period: 'July 2026' },
-    { id: 'TGT002', userId: 'MGR002', name: 'Sunita Sharma', role: 'Manager', targetCalls: 12000, achievedCalls: 12100, targetConvs: 400, achievedConvs: 385, period: 'July 2026' },
-    { id: 'TGT003', userId: 'MGR003', name: 'Deepak Verma', role: 'Admin', targetCalls: 20000, achievedCalls: 18900, targetConvs: 600, achievedConvs: 540, period: 'July 2026' },
-    { id: 'TGT004', userId: 'MGR004', name: 'Kavita Iyer', role: 'Manager', targetCalls: 10000, achievedCalls: 9870, targetConvs: 300, achievedConvs: 285, period: 'July 2026' },
-    { id: 'TGT005', userId: 'MGR006', name: 'Rekha Nair', role: 'Manager', targetCalls: 15000, achievedCalls: 13400, targetConvs: 450, achievedConvs: 410, period: 'July 2026' },
+    { id: 'TGT001', userId: 'MGR001', name: 'Arun Patel', role: 'Manager', groupName: 'Group A', managerCount: 1, telecallerCount: 12, clientAmount: 50000, targetCalls: 16000, achievedCalls: 15240, targetConvs: 500, achievedConvs: 480, period: 'July 2026' },
+    { id: 'TGT002', userId: 'MGR002', name: 'Sunita Sharma', role: 'Manager', groupName: 'Group B', managerCount: 1, telecallerCount: 8, clientAmount: 40000, targetCalls: 12000, achievedCalls: 12100, targetConvs: 400, achievedConvs: 385, period: 'July 2026' },
+    { id: 'TGT003', userId: 'MGR003', name: 'Deepak Verma', role: 'Admin', groupName: 'Group C', managerCount: 2, telecallerCount: 15, clientAmount: 65000, targetCalls: 20000, achievedCalls: 18900, targetConvs: 600, achievedConvs: 540, period: 'July 2026' },
+    { id: 'TGT004', userId: 'MGR004', name: 'Kavita Iyer', role: 'Manager', groupName: 'Group A', managerCount: 1, telecallerCount: 10, clientAmount: 35000, targetCalls: 10000, achievedCalls: 9870, targetConvs: 300, achievedConvs: 285, period: 'July 2026' },
+    { id: 'TGT005', userId: 'MGR006', name: 'Rekha Nair', role: 'Manager', groupName: 'Group B', managerCount: 1, telecallerCount: 11, clientAmount: 48000, targetCalls: 15000, achievedCalls: 13400, targetConvs: 450, achievedConvs: 410, period: 'July 2026' },
   ]);
 
   // Form dialog state
@@ -71,9 +56,11 @@ export default function TeamTarget() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  // Active details view state for displaying group/individual section
+  const [activeGroup, setActiveGroup] = useState(null);
+
   const filteredTargets = useMemo(() => {
     return targets.filter(tgt => {
-      // Map period to start/end dates for filtering
       let tgtStart = '2026-07-01';
       let tgtEnd = '2026-07-31';
       if (tgt.period === 'August 2026') {
@@ -90,25 +77,11 @@ export default function TeamTarget() {
     });
   }, [targets, fromDate, toDate]);
 
-  // Stats
-  const stats = useMemo(() => {
-    const totalCallsTarget = filteredTargets.reduce((acc, curr) => acc + Number(curr.targetCalls), 0);
-    const totalCallsAchieved = filteredTargets.reduce((acc, curr) => acc + Number(curr.achievedCalls), 0);
-    const totalConvsTarget = filteredTargets.reduce((acc, curr) => acc + Number(curr.targetConvs), 0);
-    const totalConvsAchieved = filteredTargets.reduce((acc, curr) => acc + Number(curr.achievedConvs), 0);
-
-    const callRate = totalCallsTarget ? Math.round((totalCallsAchieved / totalCallsTarget) * 100) : 0;
-    const convRate = totalConvsTarget ? Math.round((totalConvsAchieved / totalConvsTarget) * 100) : 0;
-
-    return {
-      callsTarget: totalCallsTarget,
-      callsAchieved: totalCallsAchieved,
-      callsAchievementRate: callRate,
-      convTarget: totalConvsTarget,
-      convAchieved: totalConvsAchieved,
-      convAchievementRate: convRate
-    };
-  }, [filteredTargets]);
+  // Telecallers for the active group
+  const activeTelecallers = useMemo(() => {
+    if (!activeGroup) return [];
+    return telecallersList.filter(tc => !activeGroup.userId || tc.managerId === activeGroup.userId);
+  }, [activeGroup, telecallersList]);
 
   const handleAddClick = () => {
     setFormData({
@@ -164,6 +137,10 @@ export default function TeamTarget() {
         userId: formData.userId,
         name: selectedUser.name,
         role: selectedUser.role,
+        groupName: selectedUser.group || 'Group A',
+        managerCount: 1,
+        telecallerCount: selectedUser.assignedTelecallers || 5,
+        clientAmount: 30000,
         targetCalls: Number(formData.targetCalls),
         achievedCalls: 0,
         targetConvs: Number(formData.targetConvs),
@@ -200,6 +177,10 @@ export default function TeamTarget() {
       userId: teamFormData.managerId,
       name: `${teamFormData.teamName} (${manager ? manager.name : 'Unknown'})`,
       role: 'Team',
+      groupName: 'Group B',
+      managerCount: 1,
+      telecallerCount: teamFormData.memberIds.length,
+      clientAmount: 45000,
       targetCalls: Number(teamFormData.targetCalls) || 15000,
       achievedCalls: 0,
       targetConvs: Number(teamFormData.targetConvs) || 400,
@@ -212,17 +193,145 @@ export default function TeamTarget() {
     setTeamOpen(false);
   };
 
-  const chartData = useMemo(() => {
-    return filteredTargets.map(t => {
-      const completionRate = t.targetCalls ? Math.round((t.achievedCalls / t.targetCalls) * 100) : 0;
-      return {
-        name: t.name,
-        target: t.targetCalls,
-        achieved: t.achievedCalls,
-        rate: completionRate
-      };
-    });
-  }, [filteredTargets]);
+  if (activeGroup) {
+    const completedAvenue = activeGroup.clientAmount * 0.95; // 95% completion rate
+    return (
+      <Box>
+        {/* Back Button aligned to right and styled blue */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setActiveGroup(null)}
+            sx={{
+              background: 'linear-gradient(135deg, #0343a8, #0454cc)',
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: '8px',
+              px: 3,
+            }}
+          >
+            Back to Team Targets
+          </Button>
+        </Box>
+
+        <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>
+          Target Details for {activeGroup.groupName}
+        </Typography>
+
+        <Grid container spacing={3}>
+          {/* Section 1: Group Team Target */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: '100%' }}>
+              <CardContent sx={{ p: 4 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, color: '#0343a8' }}>
+                  <i className="bi bi-people-fill" style={{ marginRight: 10 }}></i>
+                  Group Team Target
+                </Typography>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Manager Name</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700, mt: 0.5, color: '#1e293b' }}>
+                      {activeGroup.name}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Telecallers List</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                      {activeTelecallers.map(tc => (
+                        <Chip 
+                          key={tc.id} 
+                          label={tc.name} 
+                          size="small" 
+                          sx={{ backgroundColor: '#f1f5f9', color: '#475569', fontWeight: 600 }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Total Avenue Target</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 800, mt: 0.5, color: '#0f172a' }}>
+                      ₹{activeGroup.clientAmount.toLocaleString('en-IN')}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Completed Avenue Target</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#16a34a', mt: 0.5 }}>
+                      ₹{completedAvenue.toLocaleString('en-IN')}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>Avenue Achievement Rate</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#16a34a' }}>
+                        95%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={95}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#e2e8f0',
+                        '& .MuiLinearProgress-bar': { backgroundColor: '#16a34a' }
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Section 2: Individual Target */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: '100%' }}>
+              <CardContent sx={{ p: 4 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, color: '#0343a8' }}>
+                  <i className="bi bi-person-fill" style={{ marginRight: 10 }}></i>
+                  Individual Target
+                </Typography>
+
+                <TableContainer sx={{ maxHeight: 350, border: '1px solid #e2e8f0', borderRadius: 2 }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>Member Name</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>Target Calls</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>Completed Target</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>Achievement</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {activeTelecallers.map(tc => {
+                        const targetCalls = 1500;
+                        const completed = tc.totalCalls || 1200;
+                        const rate = Math.round((completed / targetCalls) * 100);
+                        return (
+                          <TableRow key={tc.id} hover>
+                            <TableCell sx={{ fontWeight: 500 }}>{tc.name}</TableCell>
+                            <TableCell align="right">{targetCalls.toLocaleString()}</TableCell>
+                            <TableCell align="right">{completed.toLocaleString()}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: rate >= 90 ? '#16a34a' : '#0343a8' }}>
+                              {rate}%
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -316,261 +425,72 @@ export default function TeamTarget() {
         </CardContent>
       </Card>
 
-      {/* Target Stats Cards */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        {/* Calls Target */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Total Call Target</Typography>
-                <Avatar sx={{ backgroundColor: '#eaf4ff', color: '#0343a8', width: 38, height: 38 }}>
-                  <i className="bi bi-telephone-outbound-fill" style={{ fontSize: '1rem' }}></i>
-                </Avatar>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: '#111827', mb: 1 }}>
-                {stats.callsTarget.toLocaleString()}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="caption" color="text.secondary">Achieved: <b>{stats.callsAchieved.toLocaleString()}</b></Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Calls Achievement rate */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Call Achievement Rate</Typography>
-                <Avatar sx={{ backgroundColor: '#f0fdf4', color: '#16a34a', width: 38, height: 38 }}>
-                  <i className="bi bi-percent" style={{ fontSize: '1rem' }}></i>
-                </Avatar>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: '#16a34a', mb: 1 }}>
-                {stats.callsAchievementRate}%
-              </Typography>
-              <Box sx={{ width: '100%', mt: 1.5 }}>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={stats.callsAchievementRate} 
-                  sx={{ 
-                    height: 6, 
-                    borderRadius: 3, 
-                    backgroundColor: '#e2e8f0', 
-                    '& .MuiLinearProgress-bar': { backgroundColor: '#16a34a' } 
-                  }} 
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Conversion Target */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Total Conversion Target</Typography>
-                <Avatar sx={{ backgroundColor: '#fdf2f8', color: '#db2777', width: 38, height: 38 }}>
-                  <i className="bi bi-graph-up-arrow" style={{ fontSize: '1rem' }}></i>
-                </Avatar>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: '#111827', mb: 1 }}>
-                {stats.convTarget.toLocaleString()}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="caption" color="text.secondary">Achieved: <b>{stats.convAchieved.toLocaleString()}</b></Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Conversion Achievement Rate */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>Conv. Achievement Rate</Typography>
-                <Avatar sx={{ backgroundColor: '#faf5ff', color: '#9333ea', width: 38, height: 38 }}>
-                  <i className="bi bi-award" style={{ fontSize: '1rem' }}></i>
-                </Avatar>
-              </Box>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: '#9333ea', mb: 1 }}>
-                {stats.convAchievementRate}%
-              </Typography>
-              <Box sx={{ width: '100%', mt: 1.5 }}>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={stats.convAchievementRate} 
-                  sx={{ 
-                    height: 6, 
-                    borderRadius: 3, 
-                    backgroundColor: '#e2e8f0', 
-                    '& .MuiLinearProgress-bar': { backgroundColor: '#9333ea' } 
-                  }} 
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Target Progress Charts */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        {/* Calls Progress Chart */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>Calls vs Target Calls</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Comparison of monthly target limits and actual calls placed</Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={targetHistoryData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                  <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} />
-                  <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} />
-                  <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} />
-                  <Legend iconType="circle" iconSize={8} />
-                  <Bar dataKey="targetCalls" fill="#cbd5e1" name="Target Calls" radius={[4, 4, 0, 0]} barSize={20} />
-                  <Bar dataKey="actualCalls" fill="#0343a8" name="Actual Calls" radius={[4, 4, 0, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* User Achievement Rates */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Individual Progress</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Call target completion percentages</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                {filteredTargets.map((tgt) => {
-                  const rate = tgt.targetCalls ? Math.round((tgt.achievedCalls / tgt.targetCalls) * 100) : 0;
-                  const isSuccess = rate >= 90;
-                  const isWarning = rate < 80;
-                  
-                  return (
-                    <Box key={tgt.id}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>{tgt.name}</Typography>
-                        <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: isSuccess ? '#16a34a' : (isWarning ? '#ea580c' : '#0343a8') }}>
-                          {rate}%
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={Math.min(rate, 100)} 
-                        sx={{ 
-                          height: 6, 
-                          borderRadius: 3, 
-                          backgroundColor: '#f1f5f9',
-                          '& .MuiLinearProgress-bar': { 
-                            backgroundColor: isSuccess ? '#16a34a' : (isWarning ? '#ea580c' : '#0343a8') 
-                          } 
-                        }} 
-                      />
-                    </Box>
-                  );
-                })}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
       {/* Targets Table */}
       <Card>
         <TableContainer>
           <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Target ID</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>User Name</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Role</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Target Period</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Target Calls</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Achieved Calls</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Target Convs</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Achieved Convs</TableCell>
-                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Achievement</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>S.No</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Group Name</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Manager Count</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Telecaller Count</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Client Amount</TableCell>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredTargets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tgt) => {
-                const completionRate = tgt.targetCalls ? Math.round((tgt.achievedCalls / tgt.targetCalls) * 100) : 0;
-                let statusLabel = 'On Track';
-                let statusColor = '#0343a8';
-                let statusBg = '#eaf4ff';
-
-                if (completionRate >= 95) {
-                  statusLabel = 'Achieved';
-                  statusColor = '#16a34a';
-                  statusBg = '#f0fdf4';
-                } else if (completionRate < 80) {
-                  statusLabel = 'Behind';
-                  statusColor = '#ef4444';
-                  statusBg = '#fee2e2';
-                }
-
-                return (
-                  <TableRow key={tgt.id} hover>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#0343a8', whiteSpace: 'nowrap' }}>{tgt.id}</Typography>
-                    </TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
-                        <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
-                          {getInitials(tgt.name)}
-                        </Avatar>
-                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{tgt.name}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Chip label={tgt.role} size="small" sx={{ backgroundColor: '#f1f5f9', color: '#475569', fontWeight: 500 }} />
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tgt.period}</Typography>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tgt.targetCalls.toLocaleString()}</Typography>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tgt.achievedCalls.toLocaleString()}</Typography>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{tgt.targetConvs.toLocaleString()}</Typography>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>{tgt.achievedConvs.toLocaleString()}</Typography>
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Chip 
-                        label={`${completionRate}% (${statusLabel})`} 
-                        size="small" 
-                        sx={{ backgroundColor: statusBg, color: statusColor, fontWeight: 700 }} 
-                      />
-                    </TableCell>
-                    <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                        <Tooltip title="Edit">
-                          <IconButton size="small" onClick={() => handleEditClick(tgt)} sx={{ color: '#64748b', '&:hover': { color: '#d97706', backgroundColor: '#fef3c7' } }}>
-                            <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton size="small" onClick={() => handleDeleteClick(tgt.id)} sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}>
-                            <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {filteredTargets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tgt, index) => (
+                <TableRow key={tgt.id} hover>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#64748b' }}>
+                      {page * rowsPerPage + index + 1}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Chip 
+                      label={tgt.groupName} 
+                      size="small" 
+                      onClick={() => setActiveGroup(tgt)}
+                      sx={{ 
+                        backgroundColor: '#eaf4ff', 
+                        color: '#0343a8', 
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: '#0343a8',
+                          color: '#ffffff'
+                        }
+                      }} 
+                    />
+                  </TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{tgt.managerCount}</Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{tgt.telecallerCount}</Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#16a34a' }}>
+                      ₹{tgt.clientAmount.toLocaleString('en-IN')}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => handleEditClick(tgt)} sx={{ color: '#64748b', '&:hover': { color: '#d97706', backgroundColor: '#fef3c7' } }}>
+                          <i className="bi bi-pencil" style={{ fontSize: '0.95rem' }}></i>
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton size="small" onClick={() => handleDeleteClick(tgt.id)} sx={{ color: '#64748b', '&:hover': { color: '#ef4444', backgroundColor: '#fee2e2' } }}>
+                          <i className="bi bi-trash" style={{ fontSize: '0.95rem' }}></i>
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>

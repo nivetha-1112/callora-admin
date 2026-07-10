@@ -1,301 +1,449 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from "react";
 import {
   Box, Card, CardContent, Typography, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
-  Select, MenuItem, FormControl, InputLabel, TextField, InputAdornment, Autocomplete,
-  Dialog, DialogTitle, DialogContent, DialogActions, IconButton
-} from '@mui/material';
+  TextField, Autocomplete, Chip, Divider, Paper, Grid
+} from "@mui/material";
 
-import PageHeader from '../../components/PageHeader/PageHeader';
-import StatusChip from '../../components/StatusChip/StatusChip';
-import { managers as initialUsers } from '../../data/managerData';
-import { telecallers, telecallerClients } from '../../data/telecallerData';
-import { getInitials, formatDate } from '../../utils/helpers';
-import { useToast } from '../../context/ToastContext';
+import PageHeader from "../../components/PageHeader/PageHeader";
+import StatusChip from "../../components/StatusChip/StatusChip";
+import { managers } from "../../data/managerData";
+import { telecallers, telecallerClients, callHistory } from "../../data/telecallerData";
+import { getInitials, formatDate } from "../../utils/helpers";
+import { useToast } from "../../context/ToastContext";
+
+const statusConfig = {
+  "Converted":          { color: "#16a34a", bg: "#f0fdf4", icon: "bi-check-circle-fill" },
+  "Not Interested":     { color: "#ef4444", bg: "#fee2e2", icon: "bi-x-circle-fill" },
+  "Follow Up":          { color: "#f59e0b", bg: "#fffbeb", icon: "bi-arrow-clockwise" },
+  "Interested":         { color: "#0343a8", bg: "#eaf4ff", icon: "bi-star-fill" },
+  "Ringing":            { color: "#64748b", bg: "#f1f5f9", icon: "bi-telephone-fill" },
+  "Callback Requested": { color: "#9333ea", bg: "#faf5ff", icon: "bi-telephone-inbound-fill" },
+};
+
+function formatDateTime(isoString) {
+  if (!isoString) return "—";
+  const d = new Date(isoString);
+  return d.toLocaleString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: true,
+  });
+}
 
 export default function Reports() {
   const { showToast } = useToast();
-  const [search, setSearch] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState('');
 
-  // Dialog state for viewing telecaller clients in-place
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTelecaller, setSelectedTelecaller] = useState(null);
-
-  // Date filters state
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-
-  const assignedTelecallers = useMemo(() => {
-    if (!selectedUserId) return [];
-    return telecallers.filter((tc) => tc.managerId === selectedUserId);
-  }, [selectedUserId]);
+  const [selectedManagerId, setSelectedManagerId] = useState("");
+  const [selectedUserId, setSelectedUserId]       = useState("");
+  const [selectedDate, setSelectedDate]           = useState("");
+  const [activeView, setActiveView]               = useState("list"); // "list" or "detail"
+  const [selectedRow, setSelectedRow]             = useState(null);
 
   const filteredTelecallers = useMemo(() => {
-    return assignedTelecallers.filter((tc) => 
-      tc.name.toLowerCase().includes(search.toLowerCase()) ||
-      tc.id.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [assignedTelecallers, search]);
+    if (!selectedManagerId) return telecallers;
+    return telecallers.filter((tc) => tc.managerId === selectedManagerId);
+  }, [selectedManagerId]);
 
-  const handleRowClick = (tc) => {
-    setSelectedTelecaller(tc);
-    setDialogOpen(true);
+  const allRows = useMemo(() => {
+    const rows = [];
+    const tcList = selectedUserId
+      ? filteredTelecallers.filter((tc) => tc.id === selectedUserId)
+      : filteredTelecallers;
+    tcList.forEach((tc) => {
+      telecallerClients.forEach((client) => {
+        rows.push({ telecaller: tc, client });
+      });
+    });
+    return rows;
+  }, [filteredTelecallers, selectedUserId]);
+
+  const tableRows = useMemo(() => {
+    return allRows.filter((row) => {
+      if (!selectedDate) return true;
+      return row.client.lastContact === selectedDate;
+    });
+  }, [allRows, selectedDate]);
+
+  const clientHistory = useMemo(() => {
+    if (!selectedRow) return [];
+    
+    const existing = callHistory.filter((h) => h.client === selectedRow.client.clientName);
+    
+    if (existing.length > 0) {
+      const baseTime = new Date(existing[0].time || "2026-06-25T10:00:00");
+      return [
+        {
+          id: "step-1",
+          status: "Not Interested",
+          time: new Date(baseTime.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          duration: "1m 45s",
+          notes: "Initial call: Client mentioned they are not interested currently due to other priorities.",
+        },
+        {
+          id: "step-2",
+          status: "Follow Up",
+          time: new Date(baseTime.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          duration: "3m 15s",
+          notes: "Follow up call: Shared details. Client requested product pricing and references.",
+        },
+        {
+          id: "step-3",
+          status: existing[0].status,
+          time: existing[0].time,
+          duration: existing[0].duration,
+          notes: existing[0].notes,
+        }
+      ];
+    }
+
+    return [
+      { id: "def-1", status: "Not Interested", time: "2026-06-24T11:00:00", duration: "1m 20s", notes: "No initial interest shown." },
+      { id: "def-2", status: "Follow Up", time: "2026-06-25T14:30:00", duration: "4m 10s", notes: "Follow up call. Sent portfolio." },
+      { id: "def-3", status: "Converted", time: "2026-06-26T10:00:00", duration: "6m 15s", notes: "Deal closed and successfully converted." }
+    ];
+  }, [selectedRow]);
+
+  const handleViewClick = (row) => {
+    setSelectedRow(row);
+    setActiveView("detail");
   };
 
-  const filteredClients = useMemo(() => {
-    return telecallerClients.filter((client) => {
-      const matchFrom = !fromDate || client.lastContact >= fromDate;
-      const matchTo = !toDate || client.lastContact <= toDate;
-      return matchFrom && matchTo;
-    });
-  }, [fromDate, toDate]);
+  const getRoleDisplay = () => {
+    if (selectedUserId) return "Telecaller";
+    if (selectedManagerId) return "Manager";
+    return "Telecaller";
+  };
+
+  const clearFilters = () => {
+    setSelectedManagerId("");
+    setSelectedUserId("");
+    setSelectedDate("");
+  };
+
+  const hasFilters = selectedManagerId || selectedUserId || selectedDate;
+
+  if (activeView === "detail" && selectedRow) {
+    const clientEmail = `${selectedRow.client.clientName.toLowerCase().replace(/\s+/g, ".")}@example.com`;
+    return (
+      <Box>
+        {/* Back Button aligned to right and styled blue */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setActiveView("list")}
+            sx={{
+              background: "linear-gradient(135deg, #0343a8, #0454cc)",
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: "8px",
+              px: 3,
+            }}
+          >
+            Back to Reports
+          </Button>
+        </Box>
+
+        <Grid container spacing={3}>
+          {/* Left panel: Client Info card */}
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: "100%", borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textContent: "center", mb: 3 }}>
+                  <Avatar sx={{ width: 64, height: 64, bgcolor: "#0343a8", fontSize: "1.5rem", mb: 2 }}>
+                    {getInitials(selectedRow.client.clientName)}
+                  </Avatar>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    {selectedRow.client.clientName}
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>
+                    {selectedRow.client.phone}
+                  </Typography>
+                  {/* Added Client Email */}
+                  <Typography color="text.secondary" variant="body2" sx={{ mb: 2, fontStyle: "italic" }}>
+                    {clientEmail}
+                  </Typography>
+                  <StatusChip status={selectedRow.client.callStatus} />
+                </Box>
+
+                <Divider sx={{ my: 2.5 }} />
+
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
+                      Assigned Telecaller
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                      {selectedRow.telecaller.name}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
+                      Manager Name
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                      {selectedRow.telecaller.managerName || "—"}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
+                      Last Contact Date
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                      {formatDate(selectedRow.client.lastContact)}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
+                      Total Call Duration
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
+                      {selectedRow.client.callDuration}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Right panel: Chain style Call History timeline */}
+          <Grid item xs={12} md={8}>
+            <Card sx={{ borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+              <CardContent sx={{ p: 4 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 4 }}>
+                  <i className="bi bi-clock-history" style={{ marginRight: 10, color: "#0343a8" }}></i>
+                  Client Call Journey (Chain View)
+                </Typography>
+
+                <Box sx={{ position: "relative", pl: 4, ml: 1.5, borderLeft: "2px dashed #cbd5e1" }}>
+                  {clientHistory.map((h, i) => {
+                    const cfg = statusConfig[h.status] || { color: "#64748b", bg: "#f1f5f9", icon: "bi-circle-fill" };
+                    return (
+                      <Box key={h.id} sx={{ mb: i === clientHistory.length - 1 ? 0 : 4, position: "relative" }}>
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            left: -48,
+                            top: 4,
+                            width: 30,
+                            height: 30,
+                            borderRadius: "50%",
+                            backgroundColor: "#ffffff",
+                            border: `3px solid ${cfg.color}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 1,
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          <i className={`bi ${cfg.icon}`} style={{ fontSize: "0.75rem", color: cfg.color }}></i>
+                        </Box>
+
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 2.5,
+                            borderRadius: 2,
+                            backgroundColor: "#f8fafc",
+                            borderColor: "#e2e8f0",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1, flexWrap: "wrap", gap: 1 }}>
+                            <Chip
+                              label={h.status}
+                              size="small"
+                              sx={{ backgroundColor: cfg.bg, color: cfg.color, fontWeight: 700, fontSize: "0.75rem" }}
+                            />
+                            <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 500 }}>
+                              {formatDateTime(h.time)}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" sx={{ color: "#334155", lineHeight: 1.6, fontWeight: 500 }}>
+                            {h.notes}
+                          </Typography>
+                          <Divider sx={{ my: 1.5, borderColor: "#e2e8f0" }} />
+                          <Typography variant="caption" color="text.secondary">
+                            Call Duration: <b>{h.duration}</b>
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   return (
     <Box>
       <PageHeader
         title="Reports"
-        subtitle="View and export detailed performance reports by User"
-        breadcrumbs={[{ label: 'Home', path: '/' }, { label: 'Reports' }]}
+        subtitle="View and export detailed performance reports by manager and user"
+        breadcrumbs={[{ label: "Home", path: "/" }, { label: "Reports" }]}
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<i className="bi bi-download"></i>}
+            onClick={() => showToast("Report exported successfully!", "success")}
+            sx={{
+              background: "linear-gradient(135deg, #0343a8, #0454cc)",
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: "8px",
+              px: 3,
+            }}
+          >
+            Export
+          </Button>
+        }
       />
 
-      <Card>
-        <CardContent sx={{ p: 4 }}>
-          {/* Dropdown & Date Filters */}
-          <Box sx={{ mb: 4, display: 'flex', gap: 2.5, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+          <Box sx={{ display: "flex", gap: 2.5, flexWrap: "wrap", alignItems: "center" }}>
             <Autocomplete
               size="small"
-              value={initialUsers.find((u) => u.id === selectedUserId) || null}
-              onChange={(event, newValue) => {
-                setSelectedUserId(newValue ? newValue.id : '');
-                setSearch('');
+              options={managers}
+              getOptionLabel={(o) => `${o.name} (${o.role})`}
+              value={managers.find((m) => m.id === selectedManagerId) || null}
+              onChange={(_, val) => {
+                setSelectedManagerId(val ? val.id : "");
+                setSelectedUserId("");
               }}
-              options={initialUsers}
-              getOptionLabel={(option) => `${option.name} (${option.role})`}
+              renderInput={(params) => <TextField {...params} label="Select Manager" />}
+              sx={{ minWidth: 240, flex: 1 }}
+            />
+            <Autocomplete
+              size="small"
+              options={filteredTelecallers}
+              getOptionLabel={(o) => `${o.name} (${o.id})`}
+              value={filteredTelecallers.find((tc) => tc.id === selectedUserId) || null}
+              onChange={(_, val) => setSelectedUserId(val ? val.id : "")}
               renderInput={(params) => <TextField {...params} label="Select User" />}
-              sx={{ minWidth: 260, maxWidth: 360, flex: 1 }}
+              sx={{ minWidth: 240, flex: 1 }}
             />
             <TextField
               type="date"
-              label="From Date"
+              label="Select Date"
               size="small"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: 170 }}
             />
-            <TextField
-              type="date"
-              label="To Date"
-              size="small"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ minWidth: 180 }}
-            />
-            {(fromDate || toDate) && (
+            {hasFilters && (
               <Button
-                variant="text"
+                variant="outlined"
                 size="small"
-                onClick={() => {
-                  setFromDate('');
-                  setToDate('');
+                onClick={clearFilters}
+                sx={{
+                  borderColor: "#cbd5e1",
+                  color: "#64748b",
+                  textTransform: "none",
+                  height: 40,
+                  borderRadius: "6px",
+                  "&:hover": { borderColor: "#94a3b8", backgroundColor: "#f1f5f9" },
                 }}
-                sx={{ color: '#ef4444', textTransform: 'none', fontWeight: 600 }}
               >
-                Clear Dates
+                Clear Filter
               </Button>
             )}
           </Box>
-
-          {/* Telecallers Table or Prompt */}
-          {selectedUserId ? (
-            <Box>
-              {assignedTelecallers.length > 0 ? (
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                      Assigned Telecallers ({filteredTelecallers.length})
-                    </Typography>
-                    <TextField
-                      size="small"
-                      placeholder="Search telecallers..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      sx={{ minWidth: 260 }}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <i className="bi bi-search" style={{ fontSize: '0.95rem', color: '#9ca3af' }}></i>
-                            </InputAdornment>
-                          )
-                        }
-                      }}
-                    />
-                  </Box>
-                  {filteredTelecallers.length > 0 ? (
-                    <TableContainer>
-                      <Table sx={{ minWidth: 900 }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Emp ID</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Name</TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Assigned Clients</TableCell>
-                            <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>Actions</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {filteredTelecallers.map((tc) => (
-                            <TableRow 
-                              key={tc.id} 
-                              hover
-                              onClick={() => handleRowClick(tc)}
-                              sx={{ cursor: 'pointer' }}
-                            >
-                              <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                                <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#0343a8', whiteSpace: 'nowrap' }}>
-                                  {tc.id}
-                                </Typography>
-                              </TableCell>
-                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, whiteSpace: 'nowrap' }}>
-                                  <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>
-                                    {getInitials(tc.name)}
-                                  </Avatar>
-                                  <Box sx={{ whiteSpace: 'nowrap' }}>
-                                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{tc.name}</Typography>
-                                    <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{tc.email}</Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-                              <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                                <StatusChip status={tc.status} />
-                              </TableCell>
-                              <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                  {tc.totalClients || 0}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center" sx={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  startIcon={<i className="bi bi-download"></i>}
-                                  onClick={() => showToast(`Exporting report for ${tc.name}...`, 'info')}
-                                  sx={{
-                                    borderColor: '#64748b',
-                                    color: '#64748b',
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    py: 0.5,
-                                    px: 1.5,
-                                    borderRadius: '6px',
-                                    '&:hover': {
-                                      borderColor: '#0343a8',
-                                      color: '#0343a8',
-                                      backgroundColor: '#eaf4ff',
-                                    }
-                                  }}
-                                >
-                                  Export
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    <Typography color="text.secondary" sx={{ mt: 2 }}>
-                      No telecallers found matching the search criteria.
-                    </Typography>
-                  )}
-                </Box>
-              ) : (
-                <Typography color="text.secondary" sx={{ mt: 2 }}>
-                  No telecallers assigned to this user.
-                </Typography>
-              )}
-            </Box>
-          ) : (
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <i className="bi bi-person-badge" style={{ fontSize: '3.5rem', color: '#cbd5e1' }}></i>
-              <Typography color="text.secondary" sx={{ mt: 2, fontWeight: 500 }}>
-                Select a user from the dropdown above to view their performance report and assigned telecallers.
-              </Typography>
-            </Box>
-          )}
         </CardContent>
       </Card>
 
-      {/* In-place Assigned Clients Dialog */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={() => setDialogOpen(false)}
-        PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ 
-          background: 'linear-gradient(135deg, #022d71 0%, #0343a8 100%)', 
-          color: '#ffffff',
-          fontWeight: 700,
-          py: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            {selectedTelecaller ? `${selectedTelecaller.name}'s Assigned Clients` : 'Assigned Clients'}
-          </Typography>
-          <IconButton onClick={() => setDialogOpen(false)} sx={{ color: '#ffffff' }}>
-            <i className="bi bi-x-lg" style={{ fontSize: '1rem' }}></i>
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ px: 3, py: 3 }}>
-          {selectedTelecaller && (
-            <Box>
-              <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Client Name</TableCell>
-                      <TableCell align="center">Phone</TableCell>
-                      <TableCell align="center">Last Contact</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                      <TableCell align="center">Duration</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredClients.map((client) => (
-                      <TableRow key={client.id} hover>
-                        <TableCell sx={{ fontWeight: 600 }}>{client.clientName}</TableCell>
-                        <TableCell align="center">{client.phone}</TableCell>
-                        <TableCell align="center">{formatDate(client.lastContact)}</TableCell>
-                        <TableCell align="center">
-                          <StatusChip status={client.callStatus} />
-                        </TableCell>
-                        <TableCell align="center">{client.callDuration}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid #f1f5f9' }}>
-          <Button 
-            variant="contained" 
-            onClick={() => setDialogOpen(false)}
-            sx={{ background: '#0343a8', textTransform: 'none', borderRadius: 2, px: 3 }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Table */}
+      <Card>
+        <TableContainer>
+          <Table sx={{ minWidth: 900 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>Emp ID</TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap" }}>Name</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>Role</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>Date</TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap" }}>Client Name</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>Current Status</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tableRows.length > 0 ? (
+                tableRows.map((row, idx) => (
+                  <TableRow key={`${row.telecaller.id}-${row.client.id}-${idx}`} hover>
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "#0343a8" }}>
+                        {row.telecaller.id}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Avatar sx={{ width: 34, height: 34, fontSize: "0.75rem", background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0" }}>
+                          {getInitials(row.telecaller.name)}
+                        </Avatar>
+                        <Box>
+                          <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>{row.telecaller.name}</Typography>
+                          <Typography sx={{ fontSize: "0.7rem", color: "text.secondary" }}>{row.telecaller.email}</Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      <Chip label={getRoleDisplay()} size="small" sx={{ backgroundColor: "#f1f5f9", color: "#475569", fontWeight: 500 }} />
+                    </TableCell>
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      <Typography variant="body2">{formatDate(row.client.lastContact)}</Typography>
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>{row.client.clientName}</Typography>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary" }}>{row.client.phone}</Typography>
+                    </TableCell>
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      <StatusChip status={row.client.callStatus} />
+                    </TableCell>
+                    <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<i className="bi bi-eye"></i>}
+                        onClick={() => handleViewClick(row)}
+                        sx={{
+                          borderColor: "#0343a8",
+                          color: "#0343a8",
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                          borderRadius: "6px",
+                          textTransform: "none",
+                          "&:hover": { backgroundColor: "#eaf4ff", borderColor: "#0343a8" },
+                        }}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                    <i className="bi bi-inbox" style={{ fontSize: "3rem", color: "#cbd5e1" }}></i>
+                    <Typography color="text.secondary" sx={{ mt: 1.5, fontWeight: 500 }}>
+                      No records found. Adjust the filters above.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
     </Box>
   );
 }
