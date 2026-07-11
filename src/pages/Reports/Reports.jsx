@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box, Card, CardContent, Typography, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
@@ -167,41 +167,82 @@ export default function Reports() {
 
                 <Divider sx={{ my: 2.5 }} />
 
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
-                      Assigned Telecaller
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
-                      {selectedRow.telecaller.name}
-                    </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, px: 1 }}>
+                  {/* Assigned Telecaller */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: "#eaf4ff", color: "#0343a8", border: "1px solid #d6e9ff" }}>
+                      <i className="bi bi-headset" style={{ fontSize: "0.85rem" }}></i>
+                    </Avatar>
+                    <Box sx={{ userSelect: "text" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: "0.75rem", display: "block", color: "#000000" }}>
+                        Assigned Telecaller
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: "#475569", mt: 0.25 }}>
+                        {selectedRow.telecaller.name}
+                      </Typography>
+                    </Box>
                   </Box>
 
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
-                      Manager Name
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
-                      {selectedRow.telecaller.managerName || "—"}
-                    </Typography>
+                  {/* Manager Name */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0" }}>
+                      <i className="bi bi-person-badge" style={{ fontSize: "0.85rem" }}></i>
+                    </Avatar>
+                    <Box sx={{ userSelect: "text" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: "0.75rem", display: "block", color: "#000000" }}>
+                        Manager Name
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: "#475569", mt: 0.25 }}>
+                        {selectedRow.telecaller.managerName || "—"}
+                      </Typography>
+                    </Box>
                   </Box>
 
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
-                      Last Contact Date
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
-                      {formatDate(selectedRow.client.lastContact)}
-                    </Typography>
+                  {/* Last Contact Date */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0" }}>
+                      <i className="bi bi-calendar3" style={{ fontSize: "0.85rem" }}></i>
+                    </Avatar>
+                    <Box sx={{ userSelect: "text" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: "0.75rem", display: "block", color: "#000000" }}>
+                        Last Contact Date
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: "#475569", mt: 0.25 }}>
+                        {formatDate(selectedRow.client.lastContact)}
+                      </Typography>
+                    </Box>
                   </Box>
 
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: "uppercase" }}>
-                      Total Call Duration
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.25 }}>
-                      {selectedRow.client.callDuration}
-                    </Typography>
+                  {/* Total Call Duration */}
+                  <Box sx={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 1.5, 
+                    p: 1.2, 
+                    borderRadius: 2, 
+                    backgroundColor: "#fffbeb", 
+                    border: "1px solid #fef3c7" 
+                  }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: "#fef3c7", color: "#d97706" }}>
+                      <i className="bi bi-stopwatch" style={{ fontSize: "0.85rem" }}></i>
+                    </Avatar>
+                    <Box sx={{ userSelect: "text" }}>
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary" 
+                        sx={{ 
+                          fontWeight: 700, 
+                          fontSize: "0.75rem", 
+                          display: "block",
+                          color: "#b45309",
+                        }}
+                      >
+                        Total Call Duration
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: "#78350f" }}>
+                        {selectedRow.client.callDuration}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               </CardContent>
@@ -210,7 +251,7 @@ export default function Reports() {
 
           {/* Right panel: Chain style Call History timeline */}
           <Grid item xs={12} md={8}>
-            <Card sx={{ borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <Card sx={{ height: "100%", borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
               <CardContent sx={{ p: 4 }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 4 }}>
                   <i className="bi bi-clock-history" style={{ marginRight: 10, color: "#0343a8" }}></i>
