@@ -125,7 +125,7 @@ export default function Reports() {
   if (activeView === "detail" && selectedRow) {
     const clientEmail = `${selectedRow.client.clientName.toLowerCase().replace(/\s+/g, ".")}@example.com`;
     return (
-      <Box>
+      <Box sx={{ overflow: "hidden", width: "100%" }}>
         {/* Back Button aligned to right and styled blue */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
           <Button
@@ -143,9 +143,10 @@ export default function Reports() {
           </Button>
         </Box>
 
-        <Grid container spacing={3}>
+        {/* Two-panel flex layout: no gaps */}
+        <Box sx={{ display: "flex", gap: 3, alignItems: "stretch" }}>
           {/* Left panel: Client Info card */}
-          <Grid item xs={12} md={4}>
+          <Box sx={{ width: "32%", flexShrink: 0 }}>
             <Card sx={{ height: "100%", borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textContent: "center", mb: 3 }}>
@@ -247,10 +248,10 @@ export default function Reports() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
 
           {/* Right panel: Chain style Call History timeline */}
-          <Grid item xs={12} md={8}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Card sx={{ height: "100%", borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
               <CardContent sx={{ p: 4 }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 4 }}>
@@ -317,8 +318,8 @@ export default function Reports() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Box>
     );
   }
